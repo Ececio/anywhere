@@ -8,6 +8,12 @@ import timber.log.Timber
 class WrapContentStaggeredGridLayoutManager(spanCount: Int, orientation: Int) :
   StaggeredGridLayoutManager(spanCount, orientation) {
 
+  init {
+    // Relocating items between spans to close a gap makes cards that are outside the viewport
+    // jump to a new position and then move back once the next layout pass runs.
+    gapStrategy = GAP_HANDLING_NONE
+  }
+
   override fun onLayoutChildren(recycler: Recycler, state: RecyclerView.State) {
     try {
       super.onLayoutChildren(recycler, state)

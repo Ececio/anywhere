@@ -6,6 +6,7 @@
   <color name="home_popup_background">#E6FFFFFF</color>
   <color name="home_popup_base">#FFFFFFFF</color>
   <color name="home_float_background">#E64AC382</color>
+  <color name="customize_popup_background">#FFF1F8E9</color>
 
   <color name="transparent">#00000000</color>
   <color name="white">#FFFFFFFF</color>

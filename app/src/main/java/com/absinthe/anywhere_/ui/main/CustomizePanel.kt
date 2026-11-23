@@ -136,8 +136,6 @@ class CustomizePanel(
     val root = anchor.rootView
     val rootWidth = root.width.takeIf { it > 0 }
       ?: activity.resources.displayMetrics.widthPixels
-    val rootHeight = root.height.takeIf { it > 0 }
-      ?: activity.resources.displayMetrics.heightPixels
     val popupWidth = rootWidth - 24.dp
     val maxHeight = activity.resources.displayMetrics.heightPixels - 160.dp
 
@@ -156,11 +154,16 @@ class CustomizePanel(
       setOnDismissListener { popup = null }
     }
 
-    // Show the panel in the middle of the screen instead of above the button.
+    // Show the panel right above the button so it does not cover the grid it was opened from.
     val rootLocation = IntArray(2)
     root.getLocationOnScreen(rootLocation)
+    val anchorLocation = IntArray(2)
+    anchor.getLocationOnScreen(anchorLocation)
+
+    val gap = 8.dp
     val x = rootLocation[0] + (rootWidth - popupWidth) / 2
-    val y = rootLocation[1] + (rootHeight - popupHeight) / 2
+    val minY = rootLocation[1] + gap
+    val y = (anchorLocation[1] - popupHeight - gap).coerceAtLeast(minY)
     window.showAtLocation(root, Gravity.NO_GRAVITY, x, y)
 
     popup = window

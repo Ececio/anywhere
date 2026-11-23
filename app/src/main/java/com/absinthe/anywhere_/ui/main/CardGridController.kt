@@ -29,7 +29,6 @@ import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.extension.addSystemBarPaddingAsync
 import com.absinthe.anywhere_.model.database.AnywhereEntity
 import com.absinthe.anywhere_.utils.AppUtils.updateWidget
-import com.absinthe.anywhere_.utils.doOnMainThreadIdle
 import com.absinthe.libraries.utils.extensions.dp
 import com.absinthe.libraries.utils.extensions.paddingEndCompat
 import com.absinthe.libraries.utils.extensions.paddingStartCompat
@@ -64,9 +63,9 @@ class CardGridController(
       isFirstLoadItems = false
       updateItems(list)
     } else {
-      doOnMainThreadIdle({
-        recyclerView.postDelayed({ updateItems(list) }, 300)
-      })
+      // Apply the new list on the next frame instead of delaying it: a delayed diff made the
+      // grid re-layout twice, which moved off-screen cards and then snapped them back.
+      recyclerView.post { updateItems(list) }
     }
   }
   private val cardObserver = Observer<Any> { refreshRecyclerView() }

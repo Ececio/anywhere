@@ -133,14 +133,17 @@ class BaseCardAdapter(
     val item = (cardItem as CardListItem.Card).entity
     val itemView = holder.itemView as CardItemView<*>
 
+    val displayName = item.appName
+      .removeSuffix(" (Launcher)")
+      .removeSuffix(" (Exported)")
     itemView.appName.text = try {
       if (IceBox.getAppEnabledSetting(context, item.packageName) != 0) {
-        SNOW_FLAKE_EMOJI + item.appName
+        SNOW_FLAKE_EMOJI + displayName
       } else {
-        item.appName
+        displayName
       }
     } catch (e: PackageManager.NameNotFoundException) {
-      item.appName
+      displayName
     }
 
     when (layoutMode) {

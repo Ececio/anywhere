@@ -130,20 +130,9 @@ class AppDetailActivity : AppBarActivity<ActivityAppDetailBinding>(),
 
         appPackageInfo?.activities?.let { activities ->
           for (ai in activities) {
-            val launchActivity = ActivityUtils.getLauncherActivity(ai.packageName)
             val bean = AppListBean(
               id = ai.name,
-              appName = when {
-                ai.name == launchActivity -> {
-                  "${ai.loadLabel(packageManager)} (Launcher)"
-                }
-                ai.exported -> {
-                  "${ai.loadLabel(packageManager)} (Exported)"
-                }
-                else -> {
-                  ai.loadLabel(packageManager).toString()
-                }
-              },
+              appName = ai.loadLabel(packageManager).toString(),
               isExported = ai.exported,
               packageName = pkgName,
               className = ai.name,
