@@ -14,6 +14,14 @@ class WrapContentStaggeredGridLayoutManager(spanCount: Int, orientation: Int) :
     gapStrategy = GAP_HANDLING_NONE
   }
 
+  /**
+   * Predictive animations run a pre-layout with the previous item count. With a staggered grid the
+   * spans cached during that pass are then reused for the shifted items, so after inserting cards
+   * a row can be filled from the wrong column and leave holes (e.g. one new card on the far right
+   * above its own group header). Disabling them makes every change lay out in its final state.
+   */
+  override fun supportsPredictiveItemAnimations(): Boolean = false
+
   override fun onLayoutChildren(recycler: Recycler, state: RecyclerView.State) {
     try {
       super.onLayoutChildren(recycler, state)

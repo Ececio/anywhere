@@ -184,8 +184,7 @@ class CardGridController(
   }
 
   fun updateItems(list: List<AnywhereEntity>) {
-    adapter.setDiffNewData(buildListItems(filterEntities(list)))
-    updateWidget(Utils.getApp())
+    applyItems(list)
   }
 
   fun filterEntities(list: List<AnywhereEntity>): List<AnywhereEntity> {
@@ -198,6 +197,16 @@ class CardGridController(
     } else {
       list.filter { it.category == currentCategory }
     }
+  }
+
+  private fun applyItems(list: List<AnywhereEntity>) {
+    adapter.setDiffNewData(buildListItems(filterEntities(list)))
+    // StaggeredGridLayoutManager caches the span (column) of every adapter position. DiffUtil
+    // dispatches insert/move notifications, so the cached spans can point at the wrong items and
+    // leave holes until the grid is rebuilt (e.g. a group's first row only filled on the right
+    // after adding cards). Clearing the cache makes the next layout assign spans from scratch.
+    (recyclerView.layoutManager as? StaggeredGridLayoutManager)?.invalidateSpanAssignments()
+    updateWidget(Utils.getApp())
   }
 
   data class CardGroup(
@@ -302,7 +311,7 @@ class CardGridController(
     recyclerView.removeItemDecoration(decoration)
     setupRecyclerView()
     AnywhereApplication.sRepository.allAnywhereEntities.value?.let { list ->
-      adapter.setDiffNewData(buildListItems(filterEntities(list)))
+      applyItems(list)
     }
   }
 
