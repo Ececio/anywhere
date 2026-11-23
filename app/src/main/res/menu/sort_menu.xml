@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <group android:checkableBehavior="single">
+
+    <item
+      android:id="@+id/sort_by_time_desc"
+      android:icon="@drawable/ic_sort"
+      android:title="@string/menu_sort_by_time_desc" />
+    <item
+      android:id="@+id/sort_by_time_asc"
+      android:icon="@drawable/ic_sort"
+      android:title="@string/menu_sort_by_time_asc" />
+    <item
+      android:id="@+id/sort_by_name_desc"
+      android:icon="@drawable/ic_sort"
+      android:title="@string/menu_sort_by_name_desc" />
+    <item
+      android:id="@+id/sort_by_name_asc"
+      android:icon="@drawable/ic_sort"
+      android:title="@string/menu_sort_by_name_asc" />
+
+  </group>
+
+  <group android:checkableBehavior="single">
+
+    <item
+      android:id="@+id/group_by_none"
+      android:icon="@drawable/ic_group"
+      android:title="@string/menu_group_by_none" />
+    <item
+      android:id="@+id/group_by_package"
+      android:icon="@drawable/ic_group"
+      android:title="@string/menu_group_by_package" />
+    <item
+      android:id="@+id/group_by_tag"
+      android:icon="@drawable/ic_group"
+      android:title="@string/menu_group_by_tag" />
+
+  </group>
+
+  <item
+    android:id="@+id/sort"
+    android:icon="@drawable/ic_manual_sort"
+    android:title="@string/menu_sort_manually" />
+
+  <item
+    android:id="@+id/group_sort"
+    android:icon="@drawable/ic_group"
+    android:title="@string/menu_group_sort" />
+
+  <item
+    android:id="@+id/multi_select"
+    android:icon="@drawable/ic_select_all"
+    android:title="@string/menu_multi_select" />
+
+</menu>

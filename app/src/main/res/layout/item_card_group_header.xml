@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/group_header_container"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:clickable="true"
+  android:focusable="true"
+  android:paddingStart="6dp"
+  android:paddingTop="4dp"
+  android:paddingEnd="6dp"
+  android:paddingBottom="2dp">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_group_header"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="4dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="4dp">
+
+    <ImageView
+      android:id="@+id/iv_group_arrow"
+      android:layout_width="20dp"
+      android:layout_height="20dp"
+      android:contentDescription="@null"
+      android:src="@drawable/ic_keyboard_arrow_right"
+      android:tint="?attr/colorPrimary" />
+
+    <ImageView
+      android:id="@+id/iv_group_icon"
+      android:layout_width="18dp"
+      android:layout_height="18dp"
+      android:layout_marginStart="2dp"
+      android:contentDescription="@null"
+      android:scaleType="fitCenter"
+      android:src="@drawable/ic_group"
+      android:tint="?attr/colorPrimary" />
+
+    <TextView
+      android:id="@+id/tv_group_title"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:paddingStart="6dp"
+      android:textAppearance="?attr/textAppearanceSubtitle1"
+      android:textColor="?attr/colorPrimary"
+      android:textStyle="bold"
+      tools:text="Group title" />
+
+  </LinearLayout>
+
+</FrameLayout>

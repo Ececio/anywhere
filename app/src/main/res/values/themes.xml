@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <style name="Platform.V23.Theme.Anywhere" parent="Theme.Material3.Light.Anywhere" />
+
+  <style name="Platform.Theme.Anywhere" parent="Platform.V23.Theme.Anywhere" />
+
+  <style name="Base.AppTheme" parent="Platform.Theme.Anywhere">
+    <item name="preferenceTheme">@style/PreferenceThemeOverlay.Rikka.Material3</item>
+    <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
+    <item name="dropDownListViewStyle">@style/Widget.Aw.PopupMenu</item>
+
+    <!-- Compact list/preference spacing. -->
+    <item name="android:listPreferredItemPaddingStart">16dp</item>
+    <item name="android:listPreferredItemPaddingLeft">16dp</item>
+    <item name="android:listPreferredItemPaddingEnd">12dp</item>
+    <item name="android:listPreferredItemPaddingRight">12dp</item>
+    <item name="android:listPreferredItemHeightSmall">44dp</item>
+
+    <item name="android:windowActionBar">false</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
+
+    <item name="bottomSheetHeaderHandlerColor">@color/bottom_sheet_header_handler</item>
+    <item name="bottomSheetHeaderHandlerColorActivated">@color/bottom_sheet_header_handler_activated</item>
+  </style>
+
+  <style name="Theme" parent="Base.AppTheme" />
+
+  <!-- Translucent window used by the popup home mode: the launcher stays visible behind it. -->
+  <style name="Theme.Popup" parent="Theme">
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowBackground">@android:color/transparent</item>
+    <item name="android:backgroundDimEnabled">false</item>
+    <item name="android:windowDisablePreview">true</item>
+    <item name="android:windowContentOverlay">@null</item>
+  </style>
+
+</resources>
