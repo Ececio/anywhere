@@ -54,11 +54,11 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install NDK and CMake
-        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "cmake;${{ env.CMAKE_VERSION }}"
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "cmake;${{ env.CMAKE_VERSION }}"
 
       - name: Build release
         run: ./gradlew --no-daemon assembleRelease
