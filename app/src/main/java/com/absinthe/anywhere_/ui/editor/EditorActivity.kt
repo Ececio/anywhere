@@ -4,11 +4,13 @@ import android.app.Activity
 import android.content.*
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
 import android.view.View
+import android.view.ViewParent
 import android.view.Window
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
@@ -16,6 +18,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.text.HtmlCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.lifecycle.MutableLiveData
 import com.absinthe.anywhere_.AnywhereApplication
 import com.absinthe.anywhere_.BaseActivity
@@ -41,10 +44,12 @@ import com.absinthe.anywhere_.utils.manager.DialogManager.showCreatePinnedShortc
 import com.absinthe.anywhere_.utils.manager.DialogManager.showRemoveShortcutDialog
 import com.absinthe.anywhere_.view.app.AnywhereDialogBuilder
 import com.absinthe.anywhere_.viewbuilder.entity.RenameDialogBuilder
+import com.absinthe.libraries.utils.extensions.dp
 import com.absinthe.libraries.utils.extensions.getColorByAttr
 import com.blankj.utilcode.util.ActivityUtils
 import com.blankj.utilcode.util.PermissionUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.transition.platform.MaterialContainerTransform
 import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback
 import jonathanfinerty.once.Once
@@ -107,6 +112,7 @@ class EditorActivity : BaseActivity<ActivityEditorBinding>() {
 
     super.onCreate(savedInstanceState)
 
+    setUpEditorScrollPadding()
     setUpBottomDrawer()
   }
 
@@ -220,6 +226,81 @@ class EditorActivity : BaseActivity<ActivityEditorBinding>() {
     findViewById<View>(android.R.id.content).transitionName =
       getString(R.string.trans_item_container)
     setEnterSharedElementCallback(MaterialContainerTransformSharedElementCallback())
+  }
+
+  /**
+   * The editor form scrolls behind the bottom bar and the floating save button. Pad the scroll
+   * content by their height so the last fields can always be scrolled above them, including when
+   * the IME resizes the window.
+   */
+  private fun setUpEditorScrollPadding() {
+    binding.root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+      updateEditorScrollPadding()
+    }
+    // Tapping another field while the IME is already visible does not relayout, so also react to
+    // focus changes (with a short delay so the IME has time to appear).
+    binding.scrollView.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+      if (newFocus != null && newFocus !== binding.scrollView) {
+        binding.scrollView.postDelayed({ scrollFocusedViewIntoView() }, 150L)
+      }
+    }
+  }
+
+  private fun updateEditorScrollPadding() {
+    val rootHeight = binding.root.height
+    val fabTop = binding.fab.top
+    if (rootHeight <= 0 || fabTop <= 0) {
+      return
+    }
+
+    val overlayHeight = (rootHeight - fabTop).coerceAtLeast(binding.bar.height)
+    val padding = overlayHeight + 8.dp
+    if (binding.scrollView.paddingBottom != padding) {
+      binding.scrollView.updatePadding(bottom = padding)
+    }
+
+    // The focus scroll happens before the bottom bar moves up for the IME, so scroll the focused
+    // field into view again once the new layout is in place.
+    binding.scrollView.post { scrollFocusedViewIntoView() }
+  }
+
+  /**
+   * [android.widget.ScrollView.requestChildRectangleOnScreen] ignores the scroll view's bottom
+   * padding, so compute the offset manually to keep the focused field above the bar and the IME.
+   */
+  private fun scrollFocusedViewIntoView() {
+    val focused = binding.scrollView.findFocus() ?: return
+    if (focused === binding.scrollView) {
+      return
+    }
+
+    val rect = Rect()
+    val target = findTextInputLayout(focused) ?: focused
+    target.getDrawingRect(rect)
+    binding.scrollView.offsetDescendantRectToMyCoords(target, rect)
+
+    val scrollY = binding.scrollView.scrollY
+    val visibleTop = scrollY
+    val visibleBottom = scrollY + binding.scrollView.height - binding.scrollView.paddingBottom
+    val delta = when {
+      rect.bottom > visibleBottom -> rect.bottom - visibleBottom + 8.dp
+      rect.top < visibleTop -> rect.top - visibleTop - 8.dp
+      else -> 0
+    }
+    if (delta != 0) {
+      binding.scrollView.smoothScrollBy(0, delta)
+    }
+  }
+
+  private fun findTextInputLayout(view: View): TextInputLayout? {
+    var parent: ViewParent? = view.parent
+    while (parent is View) {
+      if (parent is TextInputLayout) {
+        return parent
+      }
+      parent = parent.getParent()
+    }
+    return null
   }
 
   private fun setUpBottomDrawer() {

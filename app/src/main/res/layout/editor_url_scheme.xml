@@ -55,7 +55,9 @@
       android:layout_height="wrap_content"
       android:imeOptions="actionNext"
       android:importantForAutofill="no"
-      android:nextFocusForward="@id/tiet_dynamic_params" />
+      android:maxLines="4"
+      android:nextFocusForward="@id/tiet_dynamic_params"
+      android:scrollbars="vertical" />
 
   </com.google.android.material.textfield.TextInputLayout>
 
