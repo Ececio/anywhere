@@ -80,6 +80,8 @@ jobs:
           out_dir=app/build/outputs/apk/release
           src_apk=$(ls "$out_dir"/*.apk | grep -v -- '-signed' | head -n 1)
           echo "Input APK: $src_apk"
+          version=$(basename "$src_apk" | sed -E 's/^Anywhere-([0-9][^-]*)-.*$/\1/')
+          echo "Version: $version"
 
           build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
           apksigner="$build_tools/apksigner"
@@ -92,7 +94,7 @@ jobs:
               --ks-key-alias "$ALIAS" \
               --ks-pass "pass:$KEY_STORE_PASSWORD" \
               --key-pass "pass:${KEY_PASSWORD:-$KEY_STORE_PASSWORD}" \
-              --out "$out_dir/Anywhere-release-signed.apk" \
+              --out "$out_dir/Anywhere-${version}-release-signed.apk" \
               "$src_apk"
             rm -f "$RUNNER_TEMP/release.jks"
           else
@@ -108,18 +110,19 @@ jobs:
               --ks-key-alias androiddebugkey \
               --ks-pass pass:android \
               --key-pass pass:android \
-              --out "$out_dir/Anywhere-release-debug-signed.apk" \
+              --out "$out_dir/Anywhere-${version}-release-debug-signed.apk" \
               "$src_apk"
           fi
 
           "$apksigner" verify --verbose "$out_dir"/*signed.apk
           echo "apk=$(ls "$out_dir"/*signed.apk | head -n 1)" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Upload release APK
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: anywhere-release-${{ github.sha }}
+          name: anywhere-release-${{ steps.sign.outputs.version }}-${{ github.sha }}
           path: ${{ steps.sign.outputs.apk }}
           if-no-files-found: error
 
