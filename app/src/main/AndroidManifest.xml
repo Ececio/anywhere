@@ -5,7 +5,6 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
   <uses-permission android:name="android.permission.VIBRATE" />
   <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -50,20 +49,11 @@
       android:name=".ui.main.MainActivity"
       android:configChanges="orientation"
       android:exported="true"
-      android:launchMode="singleTop"
-      android:taskAffinity="${applicationId}.fullscreen">
+      android:launchMode="singleTop">
       <meta-data
         android:name="android.app.shortcuts"
         android:resource="@xml/shortcuts" />
     </activity>
-
-    <!--    Lightweight popup home (also the launcher entry)    -->
-    <activity
-      android:name=".ui.main.HomePopupActivity"
-      android:configChanges="orientation"
-      android:exported="true"
-      android:launchMode="singleTop"
-      android:theme="@style/Theme.Popup" />
 
     <!--    Transparent icon launcher    -->
     <activity-alias
@@ -75,7 +65,7 @@
       android:label="@string/app_name"
       android:launchMode="singleTop"
       android:roundIcon="@drawable/transparent"
-      android:targetActivity=".ui.main.HomePopupActivity">
+      android:targetActivity=".ui.main.MainActivity">
       <intent-filter>
 
         <!-- Start from URL Scheme -->
@@ -130,7 +120,7 @@
       android:label="@string/app_name"
       android:launchMode="singleTop"
       android:roundIcon="@mipmap/ic_launcher_round"
-      android:targetActivity=".ui.main.HomePopupActivity">
+      android:targetActivity=".ui.main.MainActivity">
       <intent-filter>
 
         <!-- Start from URL Scheme -->
@@ -347,12 +337,6 @@
       android:enabled="true"
       android:exported="false" />
 
-    <!--    Floating ball service    -->
-    <service
-      android:name=".services.overlay.HomeFloatService"
-      android:enabled="true"
-      android:exported="false" />
-
     <!--    Custom tile one service    -->
     <service
       android:name=".services.tile.TileService1"
@@ -523,17 +507,6 @@
     <receiver
       android:name=".receiver.NotificationClickReceiver"
       android:exported="false" />
-
-    <!--    Restore the floating ball after reboot / app update    -->
-    <receiver
-      android:name=".receiver.BootReceiver"
-      android:enabled="true"
-      android:exported="true">
-      <intent-filter>
-        <action android:name="android.intent.action.BOOT_COMPLETED" />
-        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-      </intent-filter>
-    </receiver>
 
     <!--    Shizuku provider    -->
     <provider

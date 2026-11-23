@@ -28,13 +28,4 @@
 
   <style name="Theme" parent="Base.AppTheme" />
 
-  <!-- Translucent window used by the popup home mode: the launcher stays visible behind it. -->
-  <style name="Theme.Popup" parent="Theme">
-    <item name="android:windowIsTranslucent">true</item>
-    <item name="android:windowBackground">@android:color/transparent</item>
-    <item name="android:backgroundDimEnabled">false</item>
-    <item name="android:windowDisablePreview">true</item>
-    <item name="android:windowContentOverlay">@null</item>
-  </style>
-
 </resources>

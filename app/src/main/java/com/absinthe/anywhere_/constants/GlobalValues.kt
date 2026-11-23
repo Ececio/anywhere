@@ -138,42 +138,6 @@ object GlobalValues {
       mmkv.encode(Const.PREF_SPLASH_ANIMATION, value)
     }
 
-  /** How the home screen is presented when launched from the launcher icon. */
-  var homeMode
-    get() = mmkv.decodeString(Const.PREF_HOME_MODE, Const.HOME_MODE_POPUP)
-      ?: Const.HOME_MODE_POPUP
-    set(value) {
-      mmkv.encode(Const.PREF_HOME_MODE, value)
-    }
-
-  /** Opacity of the popup panel background, in percent (0 = transparent, 100 = opaque). */
-  var popupTransparency
-    get() = mmkv.decodeInt(Const.PREF_POPUP_TRANSPARENCY, 90).coerceIn(0, 100)
-    set(value) {
-      mmkv.encode(Const.PREF_POPUP_TRANSPARENCY, value.coerceIn(0, 100))
-    }
-
-  /** Whether the floating ball overlay is enabled. */
-  var homeFloat
-    get() = mmkv.decodeBool(Const.PREF_HOME_FLOAT, false)
-    set(value) {
-      mmkv.encode(Const.PREF_HOME_FLOAT, value)
-    }
-
-  /** Whether the floating ball runs as a foreground service with a persistent notification. */
-  var homeFloatForeground
-    get() = mmkv.decodeBool(Const.PREF_HOME_FLOAT_FOREGROUND, true)
-    set(value) {
-      mmkv.encode(Const.PREF_HOME_FLOAT_FOREGROUND, value)
-    }
-
-  /** Whether the floating ball is restored automatically after a reboot. */
-  var homeFloatBoot
-    get() = mmkv.decodeBool(Const.PREF_HOME_FLOAT_BOOT, true)
-    set(value) {
-      mmkv.encode(Const.PREF_HOME_FLOAT_BOOT, value)
-    }
-
   /** Duration of RecyclerView item animations such as group expanding/collapsing. */
   val itemAnimDuration: Long
     get() = when (animationSpeed) {

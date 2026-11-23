@@ -55,7 +55,7 @@
       android:layout_height="wrap_content"
       android:imeOptions="actionNext"
       android:importantForAutofill="no"
-      android:maxLines="4"
+      android:maxLines="8"
       android:nextFocusForward="@id/tiet_dynamic_params"
       android:scrollbars="vertical" />
 

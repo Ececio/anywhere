@@ -32,8 +32,7 @@ import com.microsoft.appcenter.analytics.Analytics
 /**
  * The "Customize" panel opened from the home screen button.
  *
- * It is shared by the full screen home ([MainActivity]) and the lightweight popup home
- * ([HomePopupActivity]) so both entry points expose exactly the same actions.
+ * It is shared by the home screen so every entry point exposes the same actions.
  */
 class CustomizePanel(
   private val activity: Activity,

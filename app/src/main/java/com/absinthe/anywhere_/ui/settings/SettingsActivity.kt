@@ -13,7 +13,6 @@ import androidx.core.net.toUri
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SeekBarPreference
 import androidx.preference.TwoStatePreference
 import androidx.recyclerview.widget.RecyclerView
 import com.absinthe.anywhere_.AppBarActivity
@@ -22,12 +21,10 @@ import com.absinthe.anywhere_.constants.Const
 import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.databinding.ActivitySettingsBinding
 import com.absinthe.anywhere_.model.Settings
-import com.absinthe.anywhere_.services.overlay.HomeFloatService
 import com.absinthe.anywhere_.utils.AppUtils
 import com.absinthe.anywhere_.utils.ToastUtil
 import com.absinthe.anywhere_.utils.manager.DialogManager
 import com.absinthe.anywhere_.utils.manager.URLManager
-import com.blankj.utilcode.util.PermissionUtils
 import rikka.recyclerview.fixEdgeEffect
 import rikka.widget.borderview.BorderRecyclerView
 import rikka.widget.borderview.BorderView
@@ -84,66 +81,6 @@ class SettingsActivity : AppBarActivity<ActivitySettingsBinding>() {
       findPreference<Preference>(Const.PREF_RESET_BACKGROUND)?.apply {
         setOnPreferenceClickListener {
           DialogManager.showResetBackgroundDialog(requireActivity())
-          true
-        }
-      }
-      findPreference<ListPreference>(Const.PREF_HOME_MODE)?.apply {
-        setOnPreferenceChangeListener { _, newValue ->
-          GlobalValues.homeMode = newValue.toString()
-          true
-        }
-      }
-      findPreference<SeekBarPreference>(Const.PREF_POPUP_TRANSPARENCY)?.apply {
-        value = GlobalValues.popupTransparency
-        setOnPreferenceChangeListener { _, newValue ->
-          GlobalValues.popupTransparency = (newValue as? Int) ?: GlobalValues.popupTransparency
-          true
-        }
-      }
-      findPreference<TwoStatePreference>(Const.PREF_HOME_FLOAT)?.apply {
-        isChecked = GlobalValues.homeFloat
-        setOnPreferenceChangeListener { preference, newValue ->
-          val enabled = newValue as Boolean
-          GlobalValues.homeFloat = enabled
-          if (enabled) {
-            if (PermissionUtils.isGrantedDrawOverlays()) {
-              HomeFloatService.start(requireContext())
-            } else {
-              ToastUtil.makeText(R.string.toast_home_float_need_overlay)
-              PermissionUtils.requestDrawOverlays(object : PermissionUtils.SimpleCallback {
-                override fun onGranted() {
-                  GlobalValues.homeFloat = true
-                  HomeFloatService.start(requireContext())
-                }
-
-                override fun onDenied() {
-                  GlobalValues.homeFloat = false
-                  (preference as? TwoStatePreference)?.isChecked = false
-                }
-              })
-            }
-          } else {
-            HomeFloatService.stop(requireContext())
-          }
-          true
-        }
-      }
-      findPreference<TwoStatePreference>(Const.PREF_HOME_FLOAT_FOREGROUND)?.apply {
-        isChecked = GlobalValues.homeFloatForeground
-        setOnPreferenceChangeListener { _, newValue ->
-          GlobalValues.homeFloatForeground = newValue as Boolean
-          // Restart the service so the notification appears or disappears immediately.
-          if (GlobalValues.homeFloat && PermissionUtils.isGrantedDrawOverlays()) {
-            HomeFloatService.stop(requireContext())
-            HomeFloatService.start(requireContext())
-          }
-          true
-        }
-      }
-      findPreference<TwoStatePreference>(Const.PREF_HOME_FLOAT_BOOT)?.apply {
-        isChecked = GlobalValues.homeFloatBoot
-        setOnPreferenceChangeListener { _, newValue ->
-          GlobalValues.homeFloatBoot = newValue as Boolean
           true
         }
       }
@@ -286,12 +223,6 @@ class SettingsActivity : AppBarActivity<ActivitySettingsBinding>() {
 
     override fun onResume() {
       super.onResume()
-      // Keep the floating ball switches in sync with the actual stored values.
-      findPreference<TwoStatePreference>(Const.PREF_HOME_FLOAT)?.isChecked = GlobalValues.homeFloat
-      findPreference<TwoStatePreference>(Const.PREF_HOME_FLOAT_FOREGROUND)?.isChecked =
-        GlobalValues.homeFloatForeground
-      findPreference<TwoStatePreference>(Const.PREF_HOME_FLOAT_BOOT)?.isChecked =
-        GlobalValues.homeFloatBoot
     }
 
     override fun onCreateRecyclerView(

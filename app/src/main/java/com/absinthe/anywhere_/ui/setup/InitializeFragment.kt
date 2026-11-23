@@ -13,7 +13,6 @@ import com.absinthe.anywhere_.constants.Const
 import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.constants.OnceTag
 import com.absinthe.anywhere_.databinding.*
-import com.absinthe.anywhere_.ui.main.HomePopupActivity
 import com.absinthe.anywhere_.utils.AppUtils
 import com.absinthe.anywhere_.utils.ToastUtil
 import com.absinthe.anywhere_.utils.manager.DialogManager
@@ -172,7 +171,7 @@ class InitializeFragment : Fragment(), OnButtonCheckedListener {
 
   private fun enterHomePage() {
     Once.markDone(OnceTag.FIRST_GUIDE)
-    startActivity(Intent(requireContext(), com.absinthe.anywhere_.ui.main.HomePopupActivity::class.java))
+    startActivity(Intent(requireContext(), com.absinthe.anywhere_.ui.main.MainActivity::class.java))
     requireActivity().finish()
   }
 

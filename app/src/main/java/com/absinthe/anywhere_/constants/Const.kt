@@ -19,15 +19,6 @@ object Const {
 
   const val PREF_SPLASH_ANIMATION = "splashAnimation"
 
-  const val PREF_HOME_MODE = "homeMode"
-  const val HOME_MODE_POPUP = "popup"
-  const val HOME_MODE_FULLSCREEN = "fullscreen"
-
-  const val PREF_POPUP_TRANSPARENCY = "popupTransparency"
-  const val PREF_HOME_FLOAT = "homeFloat"
-  const val PREF_HOME_FLOAT_FOREGROUND = "homeFloatForeground"
-  const val PREF_HOME_FLOAT_BOOT = "homeFloatBoot"
-
   const val PREF_CARD_MODE = "cardMode"
   const val PREF_CARD_MODE_LARGE = "large"
   const val PREF_CARD_MODE_MEDIUM = "medium"

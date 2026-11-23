@@ -1,8 +1,6 @@
 package com.absinthe.anywhere_.utils
 
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -18,8 +16,6 @@ import com.absinthe.anywhere_.AnywhereApplication
 import com.absinthe.anywhere_.AwContextWrapper
 import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.receiver.NotificationClickReceiver
-import com.absinthe.anywhere_.services.overlay.HomeFloatService
-import com.absinthe.anywhere_.ui.main.HomePopupActivity
 import com.absinthe.anywhere_.utils.manager.LogRecorder
 import com.blankj.utilcode.util.NotificationUtils
 import com.blankj.utilcode.util.NotificationUtils.ChannelConfig
@@ -32,13 +28,11 @@ object NotifyUtils {
   private const val LOGCAT_CHANNEL_ID = "logcat_channel"
   private const val BACKUP_CHANNEL_ID = "backup_channel"
   private const val WORKFLOW_CHANNEL_ID = "workflow_channel"
-  private const val HOME_FLOAT_CHANNEL_ID = "home_float_channel"
 
   const val COLLECTOR_NOTIFICATION_ID = 1001
   const val LOGCAT_NOTIFICATION_ID = 1002
   const val BACKUP_NOTIFICATION_ID = 1003
   const val WORKFLOW_NOTIFICATION_ID = 1004
-  const val HOME_FLOAT_NOTIFICATION_ID = 1005
 
   private val channelConfig = ChannelConfig(
     COLLECTOR_CHANNEL_ID,
@@ -195,71 +189,5 @@ object NotifyUtils {
         .setAutoCancel(false)
       context.startForeground(WORKFLOW_NOTIFICATION_ID, param.build())
     }
-  }
-
-  /**
-   * Shows the floating ball as a foreground service. [Service.startForeground] is always called,
-   * even when the user disabled notifications, because the platform requires it for services
-   * started with `startForegroundService`.
-   */
-  fun createHomeFloatNotification(context: Service) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-      manager.createNotificationChannel(
-        NotificationChannel(
-          HOME_FLOAT_CHANNEL_ID,
-          context.getString(R.string.notification_channel_home_float),
-          NotificationManager.IMPORTANCE_LOW
-        ).apply {
-          setShowBadge(false)
-          enableVibration(false)
-          setSound(null, null)
-        }
-      )
-    }
-
-    val contentIntent = PendingIntent.getActivity(
-      context,
-      0,
-      Intent(context, HomePopupActivity::class.java).apply {
-        addFlags(
-          Intent.FLAG_ACTIVITY_NEW_TASK or
-            Intent.FLAG_ACTIVITY_CLEAR_TOP or
-            Intent.FLAG_ACTIVITY_SINGLE_TOP
-        )
-        putExtra(HomePopupActivity.EXTRA_FROM_FLOAT, true)
-      },
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-    val stopIntent = PendingIntent.getService(
-      context,
-      1,
-      Intent(context, HomeFloatService::class.java).setAction(HomeFloatService.ACTION_STOP),
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-
-    val notification = NotificationCompat.Builder(context, HOME_FLOAT_CHANNEL_ID)
-      .setContentTitle(context.getString(R.string.notification_home_float_title))
-      .setContentText(context.getString(R.string.notification_home_float_content))
-      .setSmallIcon(R.drawable.ic_logo)
-      .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
-      .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
-      .setPriority(NotificationCompat.PRIORITY_LOW)
-      .setCategory(NotificationCompat.CATEGORY_SERVICE)
-      .setOngoing(true)
-      .setAutoCancel(false)
-      .setShowWhen(false)
-      .setOnlyAlertOnce(true)
-      .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-      .setContentIntent(contentIntent)
-      .addAction(0, context.getString(R.string.notification_home_float_stop), stopIntent)
-      .build()
-
-    context.startForeground(HOME_FLOAT_NOTIFICATION_ID, notification)
-  }
-
-  fun cancelHomeFloatNotification(context: Service) {
-    NotificationUtils.cancel(HOME_FLOAT_NOTIFICATION_ID)
-    context.stopForeground(true)
   }
 }

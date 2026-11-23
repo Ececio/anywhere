@@ -122,13 +122,4 @@
     <item>large</item>
   </string-array>
 
-  <string-array name="list_home_mode">
-    <item>@string/settings_home_mode_popup</item>
-    <item>@string/settings_home_mode_fullscreen</item>
-  </string-array>
-
-  <string-array name="list_home_mode_value">
-    <item>popup</item>
-    <item>fullscreen</item>
-  </string-array>
 </resources>

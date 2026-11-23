@@ -55,7 +55,6 @@ import com.absinthe.anywhere_.model.database.AnywhereEntity
 import com.absinthe.anywhere_.model.database.PageEntity
 import com.absinthe.anywhere_.services.BackupIntentService
 import com.absinthe.anywhere_.services.overlay.CollectorService
-import com.absinthe.anywhere_.services.overlay.HomeFloatService
 import com.absinthe.anywhere_.services.overlay.ICollectorService
 import com.absinthe.anywhere_.ui.cloud.CloudRulesActivity
 import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
@@ -112,7 +111,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
   private var mToggle: ActionBarDrawerToggle? = null
   private lateinit var customizePanel: CustomizePanel
   private var splashDismissRunnable: Runnable? = null
-  private var appliedHomeMode = Const.HOME_MODE_FULLSCREEN
 
   private val conn = object : ServiceConnection {
     override fun onServiceDisconnected(name: ComponentName?) {
@@ -137,8 +135,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
       startActivity(Intent(this, SetupActivity::class.java))
     }
 
-    appliedHomeMode = GlobalValues.homeMode
-
     window.apply {
       requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
       sharedElementsUseOverlay = false
@@ -146,7 +142,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     setExitSharedElementCallback(MaterialContainerTransformSharedElementCallback())
 
     super.onCreate(savedInstanceState)
-    HomeFloatService.startIfEnabled(this)
     setupSplashAnimation(savedInstanceState)
     initObserver()
     getAnywhereIntent(intent)
@@ -164,25 +159,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
   override fun onResume() {
     super.onResume()
-    // Close the popup only after this full screen home is actually resumed. Finishing it earlier
-    // can remove the shared task and make the full screen home disappear immediately.
-    HomePopupActivity.finishHandedOff()
     if (shouldFinish && hasResumed) {
       finish()
       return
-    }
-    if (GlobalValues.homeMode != appliedHomeMode) {
-      appliedHomeMode = GlobalValues.homeMode
-      // Switching to the popup home replaces this activity with the lightweight one instead of
-      // recreating the whole drawer / ViewPager / fragments stack.
-      if (GlobalValues.homeMode == Const.HOME_MODE_POPUP && isLauncherIntent()) {
-        startActivity(
-          Intent(this, HomePopupActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
-        finish()
-        return
-      }
     }
     hasResumed = true
 
@@ -567,11 +546,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     viewModel.shouldShowFab.observe(this) {
       binding.fab.isVisible = it
     }
-  }
-
-  private fun isLauncherIntent(): Boolean {
-    val action = intent?.action
-    return action == null || action == Intent.ACTION_MAIN
   }
 
   /**

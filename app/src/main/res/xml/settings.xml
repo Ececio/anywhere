@@ -50,48 +50,6 @@
     app:key="viewCategory"
     app:title="@string/settings_category_view">
 
-    <rikka.preference.SimpleMenuPreference
-      app:defaultValue="popup"
-      app:entries="@array/list_home_mode"
-      app:entryValues="@array/list_home_mode_value"
-      app:icon="@drawable/ic_home_mode"
-      app:key="homeMode"
-      app:summary="%s"
-      app:title="@string/settings_home_mode" />
-
-    <androidx.preference.SeekBarPreference
-      android:defaultValue="90"
-      android:max="100"
-      app:key="popupTransparency"
-      app:min="0"
-      app:seekBarIncrement="5"
-      app:showSeekBarValue="true"
-      app:summary="@string/settings_popup_transparency_summary"
-      app:title="@string/settings_popup_transparency" />
-
-    <rikka.material.preference.MaterialSwitchPreference
-      app:defaultValue="false"
-      app:icon="@drawable/ic_float"
-      app:key="homeFloat"
-      app:summary="@string/settings_home_float_summary"
-      app:title="@string/settings_home_float" />
-
-    <rikka.material.preference.MaterialSwitchPreference
-      android:dependency="homeFloat"
-      app:defaultValue="true"
-      app:icon="@drawable/ic_float"
-      app:key="homeFloatForeground"
-      app:summary="@string/settings_home_float_foreground_summary"
-      app:title="@string/settings_home_float_foreground" />
-
-    <rikka.material.preference.MaterialSwitchPreference
-      android:dependency="homeFloat"
-      app:defaultValue="true"
-      app:icon="@drawable/ic_rocket"
-      app:key="homeFloatBoot"
-      app:summary="@string/settings_home_float_boot_summary"
-      app:title="@string/settings_home_float_boot" />
-
     <Preference
       app:icon="@drawable/ic_change_bg"
       app:key="changeBackground"
