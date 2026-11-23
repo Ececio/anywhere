@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import com.absinthe.anywhere_.constants.GlobalValues
+import kotlin.math.floor
 
 /**
  * A single-line [AppCompatTextView] that scrolls its content when the text is wider than the view.
@@ -15,8 +16,10 @@ import com.absinthe.anywhere_.constants.GlobalValues
  * Unlike the platform marquee, the scrolling speed follows the "Animation speed" setting.
  *
  * The text is laid out left-aligned inside a very wide layout (required for horizontal
- * scrolling), so horizontal centering and scrolling are both applied in [onDraw] instead of
- * relying on the platform's scroll position.
+ * scrolling). Scrolling therefore uses the platform scroll position: [TextView] clips its
+ * content to a fixed window in view coordinates, so translating the canvas would shrink that
+ * window from the right instead of panning the text inside it. Only the sub-pixel remainder of
+ * the offset is applied as a canvas translation to keep the motion smooth.
  */
 class SpeedMarqueeTextView @JvmOverloads constructor(
   context: Context,
@@ -68,15 +71,26 @@ class SpeedMarqueeTextView @JvmOverloads constructor(
   override fun onDraw(canvas: Canvas) {
     val contentWidth = contentWidth()
     val availableWidth = width - compoundPaddingLeft - compoundPaddingRight
-    // Center the text when it fits; otherwise scroll it from the leading edge.
-    val centerOffset = if (centerWhenFits && contentWidth <= availableWidth) {
-      (availableWidth - contentWidth) / 2f
-    } else {
-      0f
+    // Center the text when it fits. Scrolling instead pans the text through [scrollX].
+    val centered = centerWhenFits && contentWidth <= availableWidth && scrollX == 0
+    if (!centered) {
+      // Apply the fraction of a pixel that [scrollX] cannot represent, so the text keeps moving
+      // smoothly instead of jumping one pixel at a time at slow speeds.
+      val fraction = marqueeOffset - floor(marqueeOffset)
+      if (fraction == 0f) {
+        super.onDraw(canvas)
+      } else {
+        canvas.save()
+        canvas.translate(-fraction, 0f)
+        super.onDraw(canvas)
+        canvas.restore()
+      }
+      return
     }
 
+    val centerOffset = (availableWidth - contentWidth) / 2f
     canvas.save()
-    canvas.translate(centerOffset - marqueeOffset, 0f)
+    canvas.translate(centerOffset, 0f)
     super.onDraw(canvas)
     canvas.restore()
   }
@@ -122,6 +136,9 @@ class SpeedMarqueeTextView @JvmOverloads constructor(
         } else {
           distance
         }
+        // [TextView] keeps its clipping window fixed when the view is scrolled, unlike a canvas
+        // translation, which would clip away the tail of the text.
+        scrollTo(marqueeOffset.toInt(), 0)
         invalidate()
       }
       start()
@@ -132,6 +149,7 @@ class SpeedMarqueeTextView @JvmOverloads constructor(
     animator?.cancel()
     animator = null
     marqueeOffset = 0f
+    scrollTo(0, 0)
     invalidate()
   }
 
