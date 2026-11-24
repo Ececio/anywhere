@@ -385,6 +385,9 @@
   <string name="btn_add_accessibility">无障碍</string>
   <string name="menu_share_to_cloud">分享至云端</string>
   <string name="btn_cloud_rules">云端规则</string>
+  <string name="btn_cloud_rules_2">云端规则2</string>
+  <string name="cloud_rules_2_unsupported">暂不支持该规则类型</string>
+  <string name="cloud_rules_2_load_failed">规则加载失败，请检查网络</string>
   <string name="cloud_rules_email_header">贡献者：\n卡片描述：\n\n** 请勿修改下方的内容 **\n卡片会在审核后上传到云端仓库</string>
   <string name="bsd_workflow_btn_add_a11y_node">添加无障碍节点</string>
   <string name="settings_shell_off">关闭</string>

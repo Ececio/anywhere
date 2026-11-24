@@ -291,6 +291,12 @@
       android:exported="false"
       android:label="@string/btn_cloud_rules" />
 
+    <!--    QuickShort cloud rules page    -->
+    <activity
+      android:name=".ui.cloud.QuickShortRulesActivity"
+      android:exported="false"
+      android:label="@string/btn_cloud_rules_2" />
+
     <!--    Editor container    -->
     <activity
       android:name=".ui.editor.EditorActivity"

@@ -18,6 +18,7 @@ import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.databinding.DialogCustomizeBinding
 import com.absinthe.anywhere_.model.database.AnywhereEntity
 import com.absinthe.anywhere_.ui.cloud.CloudRulesActivity
+import com.absinthe.anywhere_.ui.cloud.QuickShortRulesActivity
 import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
 import com.absinthe.anywhere_.ui.editor.EXTRA_ENTITY
 import com.absinthe.anywhere_.ui.editor.EditorActivity
@@ -120,6 +121,16 @@ class CustomizePanel(
       dismiss()
       activity.startActivity(Intent(activity, CloudRulesActivity::class.java))
       Analytics.trackEvent(EventTag.FAB_CLOUD_RULES_CLICK)
+    }
+
+    addCustomizeEntry(
+      sheet.containerTools,
+      getTintedIcon(R.drawable.ic_cloud_backup),
+      activity.getString(R.string.btn_cloud_rules_2)
+    ) {
+      dismiss()
+      activity.startActivity(Intent(activity, QuickShortRulesActivity::class.java))
+      Analytics.trackEvent(EventTag.FAB_CLOUD_RULES_2_CLICK)
     }
 
     addCustomizeEntry(

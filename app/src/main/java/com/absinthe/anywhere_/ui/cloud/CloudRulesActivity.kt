@@ -3,6 +3,7 @@ package com.absinthe.anywhere_.ui.cloud
 import android.animation.LayoutTransition
 import android.app.SearchManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.widget.LinearLayout
@@ -17,7 +18,13 @@ import com.absinthe.anywhere_.api.RuleApi
 import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.databinding.ActivityCloudRulesBinding
 import com.absinthe.anywhere_.model.cloud.RuleEntity
-import com.absinthe.anywhere_.utils.manager.DialogManager
+import com.absinthe.anywhere_.model.database.AnywhereEntity
+import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
+import com.absinthe.anywhere_.ui.editor.EXTRA_ENTITY
+import com.absinthe.anywhere_.ui.editor.EditorActivity
+import com.absinthe.anywhere_.utils.CipherUtils
+import com.absinthe.anywhere_.utils.ToastUtil
+import com.google.gson.Gson
 import me.zhanghai.android.fastscroll.FastScrollerBuilder
 import retrofit2.Call
 import retrofit2.Callback
@@ -63,9 +70,29 @@ class CloudRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
     }
     mAdapter.apply {
       setOnItemClickListener { _, _, position ->
-        DialogManager.showCloudRuleDialog(this@CloudRulesActivity, mAdapter.data[position])
+        openRule(mAdapter.data[position])
       }
     }
+  }
+
+  private fun openRule(rule: RuleEntity) {
+    val entity = try {
+      Gson().fromJson(CipherUtils.decrypt(rule.content), AnywhereEntity::class.java)
+    } catch (e: Exception) {
+      Timber.e(e)
+      null
+    }
+
+    if (entity == null) {
+      ToastUtil.makeText(this, R.string.toast_json_error)
+      return
+    }
+
+    entity.category = GlobalValues.category
+    startActivity(Intent(this, EditorActivity::class.java).apply {
+      putExtra(EXTRA_ENTITY, entity)
+      putExtra(EXTRA_EDIT_MODE, false)
+    })
   }
 
   override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -110,7 +137,7 @@ class CloudRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
     val filter = mList.filter {
       it.name.contains(newText, ignoreCase = true)
     }
-    mAdapter.setDiffNewData(filter.toMutableList())
+    mAdapter.setNewData(filter.toMutableList())
     return false
   }
 
