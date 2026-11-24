@@ -8,7 +8,6 @@ import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.constants.AnywhereType
 import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.databinding.EditorQrCodeBinding
-import com.absinthe.anywhere_.model.database.AnywhereEntity
 import com.absinthe.anywhere_.ui.editor.BaseEditorFragment
 import com.absinthe.anywhere_.utils.AppUtils
 import com.absinthe.anywhere_.utils.ShortcutsUtils
@@ -38,13 +37,14 @@ class QRCodeEditorFragment : BaseEditorFragment() {
             return false
         }
 
-        doneItem = AnywhereEntity().apply {
+        doneItem = item.copy().apply {
             appName = binding.tietAppName.text.toString()
-            param1 = item.param1
-            param2 = item.id
             description = binding.tietDescription.text.toString()
             type = AnywhereType.Card.QR_CODE
-            tag = item.tag
+            if (!isEditMode) {
+                // A new card stores the QR collection key in param2.
+                param2 = item.id
+            }
         }
 
         if (super.doneEdit()) return true
