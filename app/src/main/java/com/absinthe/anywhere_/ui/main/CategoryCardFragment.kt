@@ -3,6 +3,7 @@ package com.absinthe.anywhere_.ui.main
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.absinthe.anywhere_.AnywhereApplication
@@ -49,6 +50,9 @@ class CategoryCardFragment : Fragment() {
       recyclerView = binding.recyclerView,
       category = category
     )
+    controller.onSearchResultChanged = { isEmpty ->
+      binding.tvSearchEmpty.isVisible = isEmpty
+    }
     controller.setup()
   }
 
@@ -84,6 +88,7 @@ class CategoryCardFragment : Fragment() {
     }
 
     menu.findItem(R.id.toolbar_settings).isVisible = mode == ADAPTER_MODE_NORMAL
+    menu.findItem(R.id.toolbar_search).isVisible = mode == ADAPTER_MODE_NORMAL
     menu.findItem(R.id.toolbar_sort).isVisible = mode == ADAPTER_MODE_NORMAL
     menu.findItem(R.id.toolbar_done).isVisible = mode != ADAPTER_MODE_NORMAL
     menu.findItem(R.id.toolbar_delete).isVisible = mode == ADAPTER_MODE_SELECT
@@ -111,6 +116,13 @@ class CategoryCardFragment : Fragment() {
     controller.adapter.mode = ADAPTER_MODE_SELECT
     requireActivity().invalidateOptionsMenu()
     controller.recyclerView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+  }
+
+  /** Applies the home search query; an empty string restores the current page. */
+  fun search(query: String) {
+    if (::controller.isInitialized) {
+      controller.setSearchQuery(query)
+    }
   }
 
   fun refreshSortMode() {

@@ -6,6 +6,12 @@
   tools:ignore="AlwaysShowAction">
 
   <item
+    android:id="@+id/toolbar_search"
+    android:icon="@drawable/ic_search"
+    android:title="@string/menu_search"
+    app:showAsAction="always" />
+
+  <item
     android:id="@+id/toolbar_sort"
     android:icon="@drawable/ic_filter_list"
     android:title="@string/menu_sort"

@@ -63,6 +63,9 @@
     <string name='menu_search'>搜索</string>
     <string name='menu_show_system_app'>顯示系統應用</string>
     <string name='menu_hide_system_app'>隱藏系統應用</string>
+    <string name="search_hint">搜尋全部卡片</string>
+    <string name="search_clear">清除</string>
+    <string name="search_no_result">沒有符合的卡片</string>
 
     <string name="menu_sort_by_time_desc">按添加時間降序 (9–0)</string>
     <string name="menu_sort_by_time_asc">按添加時間升序 (0–9)</string>

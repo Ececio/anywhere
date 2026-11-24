@@ -27,6 +27,7 @@ import com.absinthe.anywhere_.constants.Const
 import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.extension.addSystemBarPaddingAsync
 import com.absinthe.anywhere_.model.database.AnywhereEntity
+import com.absinthe.anywhere_.utils.ActivityNameResolver
 import com.absinthe.anywhere_.utils.AppUtils.updateWidget
 import com.absinthe.libraries.utils.extensions.dp
 import com.absinthe.libraries.utils.extensions.paddingEndCompat
@@ -56,6 +57,13 @@ class CardGridController(
   private lateinit var decoration: SpacesItemDecoration
   private val collapsedGroups = mutableSetOf<String>()
   private var isFirstLoadItems = true
+
+  /** Non-blank while the home search filters the cards; search looks across every page. */
+  var searchQuery: String = ""
+    private set
+
+  /** Called after the list is applied; true when a non-blank search matched no card. */
+  var onSearchResultChanged: ((Boolean) -> Unit)? = null
 
   private val listObserver = Observer<List<AnywhereEntity>> { list ->
     if (isFirstLoadItems) {
@@ -187,6 +195,9 @@ class CardGridController(
   }
 
   fun filterEntities(list: List<AnywhereEntity>): List<AnywhereEntity> {
+    if (searchQuery.isNotBlank()) {
+      return list.filter { matchesSearch(it, searchQuery) }
+    }
     val currentCategory = category ?: return list
     if (!GlobalValues.isPages) {
       return list
@@ -198,9 +209,39 @@ class CardGridController(
     }
   }
 
+  /**
+   * Filters cards by the text the user sees, plus the stored name, description and tag.
+   * Package and class names are not matched so a query does not return cards whose visible
+   * name has nothing in common with it.
+   */
+  private fun matchesSearch(entity: AnywhereEntity, query: String): Boolean {
+    val needle = query.trim().lowercase()
+    if (needle.isEmpty()) return true
+
+    return sequenceOf(
+      ActivityNameResolver.getDisplayName(entity),
+      entity.appName,
+      entity.description.orEmpty(),
+      entity.tag.orEmpty()
+    ).any { it.lowercase().contains(needle) }
+  }
+
+  fun setSearchQuery(query: String) {
+    if (searchQuery == query) {
+      return
+    }
+    searchQuery = query
+    AnywhereApplication.sRepository.allAnywhereEntities.value?.let { applyItems(it) }
+  }
+
   private fun applyItems(list: List<AnywhereEntity>) {
-    adapter.setDiffNewData(buildListItems(filterEntities(list)))
+    val items = buildListItems(filterEntities(list))
+    adapter.setDiffNewData(items)
     updateWidget(Utils.getApp())
+
+    onSearchResultChanged?.invoke(
+      searchQuery.isNotBlank() && items.none { it is CardListItem.Card }
+    )
   }
 
   data class CardGroup(
@@ -218,7 +259,8 @@ class CardGridController(
   fun buildListItems(entities: List<AnywhereEntity>): MutableList<CardListItem> {
     val result = mutableListOf<CardListItem>()
 
-    if (GlobalValues.groupMode == Const.GROUP_MODE_NONE) {
+    // Search results stay flat so matches from different pages are easy to scan.
+    if (GlobalValues.groupMode == Const.GROUP_MODE_NONE || searchQuery.isNotBlank()) {
       entities.forEach { result.add(CardListItem.Card(it)) }
       return result
     }

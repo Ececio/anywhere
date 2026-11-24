@@ -14,7 +14,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.*
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -105,6 +109,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
   private var isBound = false
   private var isTitleShown = false
+  private var isSearching = false
   private var shouldFinish = false
   private var hasResumed = false
   private var collectorService: ICollectorService? = null
@@ -204,10 +209,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
   @SuppressLint("RestrictedApi")
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     when (item.itemId) {
+      R.id.toolbar_search -> {
+        if (isSearching) closeSearch() else openSearch()
+      }
       R.id.toolbar_settings -> {
+        closeSearch()
         startActivity(Intent(this, SettingsActivity::class.java))
       }
       R.id.toolbar_sort -> {
+        closeSearch()
         val popup = PopupMenu(this, findViewById(R.id.toolbar_sort))
         popup.menuInflater.inflate(R.menu.sort_menu, popup.menu)
 
@@ -286,6 +296,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
   override fun onBackPressed() {
     when {
+      isSearching -> {
+        closeSearch()
+      }
       binding.drawer.isDrawerVisible(GravityCompat.START) -> {
         binding.drawer.closeDrawer(GravityCompat.START)
       }
@@ -325,6 +338,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     binding.fullDraggableContainer.setEnableDrawer(GlobalValues.isPages)
 
     initFab()
+    initSearch()
     CardTypeIconGenerator
 
     AnywhereApplication.sRepository.allPageEntities.observe(this) {
@@ -345,6 +359,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
           registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
               super.onPageSelected(position)
+              if (isSearching) {
+                // A drawer jump leaves the filtered list on the previous page; start over.
+                closeSearch()
+              }
               val pos = if (position >= it.size) it.size - 1 else position
               setsCategory(it[pos].title, pos)
 
@@ -402,6 +420,70 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
       }
     }
+  }
+
+  private fun initSearch() {
+    binding.etSearch.addTextChangedListener(object : TextWatcher {
+      override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+      override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+      override fun afterTextChanged(s: Editable?) {
+        CategoryCardFragment.currentReference?.get()?.search(s?.toString().orEmpty())
+      }
+    })
+
+    binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
+      if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+        hideSearchKeyboard()
+        true
+      } else {
+        false
+      }
+    }
+
+    binding.ibSearchClear.setOnClickListener {
+      if (binding.etSearch.text.isNullOrEmpty()) {
+        closeSearch()
+      } else {
+        binding.etSearch.setText("")
+      }
+    }
+  }
+
+  private fun openSearch() {
+    if (isSearching) {
+      return
+    }
+    isSearching = true
+    binding.searchContainer.isVisible = true
+    binding.etSearch.setText("")
+    binding.etSearch.requestFocus()
+    // A swipe would move the filtered results to a page that never received the query.
+    binding.viewPager.isUserInputEnabled = false
+
+    doOnMainThreadIdle({
+      val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+      inputManager.showSoftInput(binding.etSearch, InputMethodManager.SHOW_IMPLICIT)
+    })
+  }
+
+  private fun closeSearch() {
+    if (!isSearching) {
+      return
+    }
+    isSearching = false
+    binding.etSearch.setText("")
+    binding.searchContainer.isVisible = false
+    binding.etSearch.clearFocus()
+    binding.viewPager.isUserInputEnabled = GlobalValues.isPages
+    hideSearchKeyboard()
+    CategoryCardFragment.currentReference?.get()?.search("")
+  }
+
+  private fun hideSearchKeyboard() {
+    val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    inputManager.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
   }
 
   private fun initDrawer(drawer: DrawerLayout) {
