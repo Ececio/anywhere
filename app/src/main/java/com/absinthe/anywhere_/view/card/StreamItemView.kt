@@ -44,6 +44,7 @@ class StreamItemView(context: Context) : ConstraintLayout(context) {
     setTypeface(null, Typeface.BOLD)
     setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
     maxLines = 2
+    ellipsize = TextUtils.TruncateAt.END
   }
 
   val description: SpeedMarqueeTextView = SpeedMarqueeTextView(context).apply {

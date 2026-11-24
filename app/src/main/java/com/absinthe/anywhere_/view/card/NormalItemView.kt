@@ -3,6 +3,7 @@ package com.absinthe.anywhere_.view.card
 import android.content.Context
 import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -40,6 +41,8 @@ class NormalItemView(context: Context) : ConstraintLayout(context) {
     id = View.generateViewId()
     setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Headline6)
     setTypeface(null, Typeface.BOLD)
+    maxLines = 2
+    ellipsize = TextUtils.TruncateAt.END
   }
 
   val param1: TextView = TextView(context).apply {

@@ -3,17 +3,18 @@ package com.absinthe.anywhere_.view.card
 import android.content.Context
 import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import com.absinthe.anywhere_.R
 import com.absinthe.libraries.utils.extensions.addPaddingBottom
 import com.absinthe.libraries.utils.extensions.dp
-import com.absinthe.anywhere_.view.app.SpeedMarqueeTextView
 
 class MinimumItemView(context: Context) : ConstraintLayout(context) {
 
@@ -37,12 +38,13 @@ class MinimumItemView(context: Context) : ConstraintLayout(context) {
     visibility = View.GONE
   }
 
-  val appName: SpeedMarqueeTextView = SpeedMarqueeTextView(context).apply {
+  val appName: TextView = TextView(context).apply {
     id = generateViewId()
     setTypeface(null, Typeface.BOLD)
     setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-    isSingleLine = true
     gravity = Gravity.CENTER_HORIZONTAL
+    maxLines = 2
+    ellipsize = TextUtils.TruncateAt.END
   }
 
   init {

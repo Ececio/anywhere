@@ -2,21 +2,24 @@ package com.absinthe.anywhere_.view.card
 
 import android.content.Context
 import android.graphics.PorterDuff
+import android.text.TextUtils
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.constants.GlobalValues
-import com.absinthe.anywhere_.view.app.SpeedMarqueeTextView
 import com.absinthe.libraries.utils.extensions.dp
 
 /**
- * Compact home page card: the icon on top and a centered, single-line, auto-scrolling name below.
- * Icon size, text size, padding and spacing follow the compact layout settings.
+ * Compact home page card: the icon on top and a centered name below.
+ * Long names wrap to at most two lines. Icon size, text size, padding and spacing follow the
+ * compact layout settings.
  */
 class CompactItemView(context: Context) : ConstraintLayout(context) {
 
@@ -40,11 +43,13 @@ class CompactItemView(context: Context) : ConstraintLayout(context) {
     visibility = View.GONE
   }
 
-  val appName: SpeedMarqueeTextView = SpeedMarqueeTextView(context).apply {
+  val appName: TextView = TextView(context).apply {
     id = View.generateViewId()
     setTextSize(TypedValue.COMPLEX_UNIT_SP, GlobalValues.compactTextSizeSp)
     includeFontPadding = false
-    centerWhenFits = true
+    gravity = Gravity.CENTER_HORIZONTAL
+    maxLines = 2
+    ellipsize = TextUtils.TruncateAt.END
   }
 
   init {
