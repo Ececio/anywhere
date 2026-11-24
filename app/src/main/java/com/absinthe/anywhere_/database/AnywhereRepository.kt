@@ -103,6 +103,14 @@ class AnywhereRepository(application: Application) {
     return mAnywhereDao.getEntityById(id)
   }
 
+  suspend fun getAll(): List<AnywhereEntity> {
+    return mAnywhereDao.getAll()
+  }
+
+  suspend fun getAllPages(): List<PageEntity> {
+    return mAnywhereDao.getAllPages()
+  }
+
   fun getPageEntityByTitle(title: String?): PageEntity? {
     if (title == null) {
       return null

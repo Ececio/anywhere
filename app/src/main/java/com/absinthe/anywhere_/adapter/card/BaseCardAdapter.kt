@@ -136,24 +136,27 @@ class BaseCardAdapter(
     val item = (cardItem as CardListItem.Card).entity
     val itemView = holder.itemView as CardItemView<*>
 
-    val displayName = ActivityNameResolver.getDisplayName(item)
+    val resolvedName = ActivityNameResolver.getDisplayName(item)
       .removeSuffix(" (Launcher)")
       .removeSuffix(" (Exported)")
+    val descriptionTitle = item.description?.trim().orEmpty()
+    val cardTitle = descriptionTitle.ifEmpty { resolvedName }
     itemView.appName.text = try {
       if (IceBox.getAppEnabledSetting(context, item.packageName) != 0) {
-        SNOW_FLAKE_EMOJI + displayName
+        SNOW_FLAKE_EMOJI + cardTitle
       } else {
-        displayName
+        cardTitle
       }
     } catch (e: PackageManager.NameNotFoundException) {
-      displayName
+      cardTitle
     }
 
     when (layoutMode) {
       LAYOUT_MODE_LARGE -> {
         val normalView = itemView as CardItemView<NormalItemView>
 
-        normalView.content.description.isGone = item.description.isNullOrEmpty()
+        // The description is shown as the title when set, so do not repeat it below.
+        normalView.content.description.isGone = descriptionTitle.isNotEmpty()
         normalView.content.param1.isGone = item.type == AnywhereType.Card.QR_CODE
           || item.type == AnywhereType.Card.IMAGE
           || item.type == AnywhereType.Card.BROADCAST
@@ -177,7 +180,9 @@ class BaseCardAdapter(
         }
 
         if (layoutMode == LAYOUT_MODE_MEDIUM) {
-          normalView!!.content.description.text = item.description
+          // The description is shown as the title when set, so do not repeat it below.
+          normalView!!.content.description.isGone = descriptionTitle.isNotEmpty()
+          normalView.content.description.text = item.description
         }
 
         if (GlobalValues.sCardBackgroundMode == Const.CARD_BG_MODE_PURE) {

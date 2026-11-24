@@ -67,25 +67,47 @@ object StorageUtils {
           ToastUtil.makeText(R.string.toast_backup_file_error)
         }
       } else {
+        val repository = AnywhereApplication.sRepository
+        val existingCardKeys = repository.getAll().mapTo(mutableSetOf()) { it.contentKey() }
+        val existingPages = repository.getAllPages()
+        val existingPageTitles = existingPages.mapTo(mutableSetOf()) { it.title }
+        var nextPagePriority = existingPages.maxOfOrNull { it.priority }?.plus(1) ?: 0
+
         val aeList = mutableListOf<AnywhereEntity>()
         val pageList = mutableListOf<PageEntity>()
-        pageList.addAll(backupBean.pageList)
+
+        for (page in backupBean.pageList) {
+          if (existingPageTitles.add(page.title)) {
+            page.priority = nextPagePriority++
+            pageList.add(page)
+          }
+        }
 
         for (ae in backupBean.anywhereList) {
-          if (!pageList.any { it.title == ae.category }) {
-            val category = ae.category.orEmpty().ifEmpty { AnywhereType.Category.DEFAULT_CATEGORY }
+          ae.category = ae.category.orEmpty().ifEmpty { AnywhereType.Category.DEFAULT_CATEGORY }
+
+          // Skip cards that are already stored, or duplicated inside the same backup.
+          if (!existingCardKeys.add(ae.contentKey())) {
+            continue
+          }
+
+          if (existingPageTitles.add(ae.category.orEmpty())) {
             pageList.add(
               PageEntity().apply {
-                title = category
-                priority = AnywhereApplication.sRepository.allPageEntities.value?.size ?: 0
+                title = ae.category.orEmpty()
+                priority = nextPagePriority++
               }
             )
-            ae.category = category
           }
           aeList.add(ae)
         }
-        AnywhereApplication.sRepository.insert(aeList)
-        AnywhereApplication.sRepository.insertPage(pageList)
+
+        if (aeList.isNotEmpty()) {
+          repository.insert(aeList)
+        }
+        if (pageList.isNotEmpty()) {
+          repository.insertPage(pageList)
+        }
 
         withContext(Dispatchers.Main) {
           ToastUtil.makeText(context.getString(R.string.toast_restore_success))
@@ -98,7 +120,11 @@ object StorageUtils {
         val entity = Gson().fromJson(content, AnywhereEntity::class.java)
         entity.category = GlobalValues.category
 
-        AnywhereApplication.sRepository.insert(entity)
+        val alreadyExists = AnywhereApplication.sRepository.getAll()
+          .any { it.contentKey() == entity.contentKey() }
+        if (!alreadyExists) {
+          AnywhereApplication.sRepository.insert(entity)
+        }
 
         withContext(Dispatchers.Main) {
           ToastUtil.makeText(context.getString(R.string.toast_restore_success))
@@ -111,6 +137,23 @@ object StorageUtils {
       }
     }
   }
+
+  /**
+   * Identity used to skip cards that are already stored when restoring a backup. Runtime-only
+   * fields (id, time stamp, color, icon) are ignored so the same card from different backups
+   * still matches.
+   */
+  private fun AnywhereEntity.contentKey(): String = listOf(
+    type,
+    appName.trim(),
+    param1,
+    param2.orEmpty(),
+    param3.orEmpty(),
+    description.orEmpty().trim(),
+    category.orEmpty(),
+    tag,
+    flags
+  ).joinToString("\u0000")
 
   fun webdavBackup() {
     GlobalScope.launch(Dispatchers.IO) {

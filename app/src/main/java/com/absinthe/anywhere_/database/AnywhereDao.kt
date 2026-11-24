@@ -45,6 +45,9 @@ interface AnywhereDao {
   fun getEntityById(id: String): AnywhereEntity?
 
   @Query("SELECT * FROM anywhere_table")
+  suspend fun getAll(): List<AnywhereEntity>
+
+  @Query("SELECT * FROM anywhere_table")
   fun selectAll(): Cursor?
 
   @Query("SELECT * FROM anywhere_table WHERE _id LIKE :id")
@@ -64,6 +67,9 @@ interface AnywhereDao {
 
   @get:Query("SELECT * from page_table ORDER BY priority ASC")
   val allPageEntities: LiveData<List<PageEntity>>
+
+  @Query("SELECT * FROM page_table")
+  suspend fun getAllPages(): List<PageEntity>
 
   @Query("SELECT * from page_table WHERE title LIKE :title")
   fun getPageEntityByTitle(title: String): PageEntity?
