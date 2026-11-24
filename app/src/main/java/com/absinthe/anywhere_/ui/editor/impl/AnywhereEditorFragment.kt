@@ -14,6 +14,7 @@ import com.absinthe.anywhere_.model.ExtraBean
 import com.absinthe.anywhere_.model.TYPE_STRING
 import com.absinthe.anywhere_.model.database.setExecWithRoot
 import com.absinthe.anywhere_.ui.editor.BaseEditorFragment
+import com.absinthe.anywhere_.utils.ActivityNameResolver
 import com.absinthe.anywhere_.utils.AppUtils
 import com.absinthe.anywhere_.utils.ShortcutsUtils
 import com.absinthe.anywhere_.utils.handler.Opener
@@ -59,7 +60,7 @@ class AnywhereEditorFragment : BaseEditorFragment() {
       }
 
       binding.apply {
-        tietAppName.setText(it.appName)
+        tietAppName.setText(ActivityNameResolver.getDisplayName(it))
         tietPackageName.setText(it.param1)
         tietClassName.setText(it.param2)
         tietDescription.setText(it.description)

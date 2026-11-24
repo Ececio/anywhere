@@ -34,6 +34,7 @@ import com.absinthe.anywhere_.ui.editor.EditorActivity
 import com.absinthe.anywhere_.ui.editor.impl.SWITCH_OFF
 import com.absinthe.anywhere_.ui.editor.impl.SWITCH_ON
 import com.absinthe.anywhere_.ui.qrcode.QRCodeCollectionActivity
+import com.absinthe.anywhere_.utils.ActivityNameResolver
 import com.absinthe.anywhere_.utils.AppUtils.atLeastO
 import com.absinthe.anywhere_.utils.AppUtils.isAppFrozen
 import com.absinthe.anywhere_.utils.ShortcutsUtils
@@ -135,7 +136,7 @@ class BaseCardAdapter(
     val item = (cardItem as CardListItem.Card).entity
     val itemView = holder.itemView as CardItemView<*>
 
-    val displayName = item.appName
+    val displayName = ActivityNameResolver.getDisplayName(item)
       .removeSuffix(" (Launcher)")
       .removeSuffix(" (Exported)")
     itemView.appName.text = try {
