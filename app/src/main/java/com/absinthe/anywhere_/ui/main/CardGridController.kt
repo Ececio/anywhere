@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.absinthe.anywhere_.AnywhereApplication
 import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.adapter.ItemTouchCallBack
@@ -22,7 +21,7 @@ import com.absinthe.anywhere_.adapter.card.LAYOUT_MODE_LARGE
 import com.absinthe.anywhere_.adapter.card.LAYOUT_MODE_MEDIUM
 import com.absinthe.anywhere_.adapter.card.LAYOUT_MODE_MINIMUM
 import com.absinthe.anywhere_.adapter.card.LAYOUT_MODE_SMALL
-import com.absinthe.anywhere_.adapter.manager.WrapContentStaggeredGridLayoutManager
+import com.absinthe.anywhere_.adapter.manager.CardGridLayoutManager
 import com.absinthe.anywhere_.constants.AnywhereType
 import com.absinthe.anywhere_.constants.Const
 import com.absinthe.anywhere_.constants.GlobalValues
@@ -201,11 +200,6 @@ class CardGridController(
 
   private fun applyItems(list: List<AnywhereEntity>) {
     adapter.setDiffNewData(buildListItems(filterEntities(list)))
-    // StaggeredGridLayoutManager caches the span (column) of every adapter position. DiffUtil
-    // dispatches insert/move notifications, so the cached spans can point at the wrong items and
-    // leave holes until the grid is rebuilt (e.g. a group's first row only filled on the right
-    // after adding cards). Clearing the cache makes the next layout assign spans from scratch.
-    (recyclerView.layoutManager as? StaggeredGridLayoutManager)?.invalidateSpanAssignments()
     updateWidget(Utils.getApp())
   }
 
@@ -316,25 +310,16 @@ class CardGridController(
   }
 
   private fun setRecyclerViewLayoutManager(configuration: Configuration) {
-    recyclerView.layoutManager =
-      if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        val spanCount = when (GlobalValues.cardMode) {
-          Const.PREF_CARD_MODE_LARGE -> 2
-          Const.PREF_CARD_MODE_MEDIUM -> 4
-          Const.PREF_CARD_MODE_SMALL -> GlobalValues.compactColumns
-          Const.PREF_CARD_MODE_MINIMUM -> 8
-          else -> 4
-        }
-        WrapContentStaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL)
-      } else {
-        val spanCount = when (GlobalValues.cardMode) {
-          Const.PREF_CARD_MODE_LARGE -> 1
-          Const.PREF_CARD_MODE_MEDIUM -> 2
-          Const.PREF_CARD_MODE_SMALL -> GlobalValues.compactColumns
-          Const.PREF_CARD_MODE_MINIMUM -> 4
-          else -> 2
-        }
-        WrapContentStaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL)
-      }
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val spanCount = when (GlobalValues.cardMode) {
+      Const.PREF_CARD_MODE_LARGE -> if (isLandscape) 2 else 1
+      Const.PREF_CARD_MODE_MEDIUM -> if (isLandscape) 4 else 2
+      Const.PREF_CARD_MODE_SMALL -> GlobalValues.compactColumns
+      Const.PREF_CARD_MODE_MINIMUM -> if (isLandscape) 8 else 4
+      else -> if (isLandscape) 4 else 2
+    }
+    recyclerView.layoutManager = CardGridLayoutManager(context, spanCount) { position ->
+      adapter.isGroupHeader(position)
+    }
   }
 }

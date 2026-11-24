@@ -19,7 +19,6 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.absinthe.anywhere_.AnywhereApplication
 import com.absinthe.anywhere_.BaseActivity
 import com.absinthe.anywhere_.R
@@ -90,17 +89,20 @@ class BaseCardAdapter(
     return super.isFixedViewType(type) || type == ITEM_TYPE_GROUP_HEADER
   }
 
+  /** Group headers span the whole row; the grid layout manager asks this for every position. */
+  fun isGroupHeader(position: Int): Boolean {
+    return getItemViewType(position) == ITEM_TYPE_GROUP_HEADER
+  }
+
   override fun onCreateDefViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
     if (viewType == ITEM_TYPE_GROUP_HEADER) {
       val header = LayoutInflater.from(context)
         .inflate(R.layout.item_card_group_header, parent, false)
-      // Group headers always occupy a full row, no matter how many columns the grid has.
-      header.layoutParams = StaggeredGridLayoutManager.LayoutParams(
+      // The width is set by the layout manager so the header fills the whole row.
+      header.layoutParams = RecyclerView.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
         ViewGroup.LayoutParams.WRAP_CONTENT
-      ).apply {
-        isFullSpan = true
-      }
+      )
       return createBaseViewHolder(header)
     }
 
