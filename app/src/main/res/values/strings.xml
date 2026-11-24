@@ -423,9 +423,9 @@
   <string name="cloud_rules_2_collection">Collection · tap to open</string>
   <string name="cloud_rules_2_load_failed">Failed to load rules, please check your network</string>
   <string name="btn_third_apps_shortcut">Third Apps Shortcuts</string>
-  <string name="shortcuts_section_static">Static shortcuts (%1$d)</string>
-  <string name="shortcuts_section_dynamic">Dynamic shortcuts (%1$d)</string>
-  <string name="shortcuts_section_apps">Create via app (%1$d)</string>
+  <string name="shortcuts_tab_static">Static (%1$d)</string>
+  <string name="shortcuts_tab_dynamic">Dynamic (%1$d)</string>
+  <string name="shortcuts_tab_apps">Via apps (%1$d)</string>
   <string name="shortcuts_load_failed">Shortcuts are unavailable in Normal mode. Switch to Root or Shizuku and grant permission</string>
 
   <string name="btn_acquire_permission">Grant</string>

@@ -9,6 +9,7 @@ import android.content.pm.ResolveInfo
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.annotation.CallSuper
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.absinthe.anywhere_.AppBarActivity
@@ -23,6 +24,7 @@ import com.absinthe.anywhere_.model.ThirdAppShortcut
 import com.absinthe.anywhere_.utils.CommandUtils
 import com.absinthe.anywhere_.utils.ShortcutDumpParser
 import com.absinthe.anywhere_.utils.ToastUtil
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +41,10 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
 
   private val mAdapter = ThirdAppsShortcutAdapter()
 
+  private var apps: List<ResolveInfo> = emptyList()
+  private var staticShortcuts: List<ThirdAppShortcut> = emptyList()
+  private var dynamicShortcuts: List<ThirdAppShortcut> = emptyList()
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -51,7 +57,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
         }
     }
 
-    val apps = getResolveInfoList()
+    apps = getResolveInfoList()
 
     val resultLauncher = registerForActivityResult(OpenCreateShortcut()) {
       it?.let {
@@ -73,12 +79,18 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
       }
     }
 
+    binding.toggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+      if (isChecked) {
+        showGroup(checkedId)
+      }
+    }
+
     binding.progressHorizontal.show()
     lifecycleScope.launch {
       val shortcuts = withContext(Dispatchers.IO) { loadShortcuts() }
       binding.progressHorizontal.hide()
 
-      render(apps, shortcuts)
+      bindShortcuts(shortcuts)
 
       if (shortcuts == null) {
         ToastUtil.makeText(this@ThirdAppsShortcutActivity, R.string.shortcuts_load_failed)
@@ -86,33 +98,42 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     }
   }
 
-  private fun render(apps: List<ResolveInfo>, shortcuts: List<ThirdAppShortcut>?) {
-    val items = mutableListOf<ThirdAppsShortcutItem>()
-    val staticShortcuts = shortcuts.orEmpty().filter { it.kind == ShortcutDumpParser.Kind.STATIC }
-    val dynamicShortcuts = shortcuts.orEmpty().filter { it.kind == ShortcutDumpParser.Kind.DYNAMIC }
+  private fun bindShortcuts(shortcuts: List<ThirdAppShortcut>?) {
+    staticShortcuts = shortcuts.orEmpty().filter { it.kind == ShortcutDumpParser.Kind.STATIC }
+    dynamicShortcuts = shortcuts.orEmpty().filter { it.kind == ShortcutDumpParser.Kind.DYNAMIC }
 
-    if (staticShortcuts.isNotEmpty()) {
-      items.add(
-        ThirdAppsShortcutItem.Header(getString(R.string.shortcuts_section_static, staticShortcuts.size))
-      )
-      staticShortcuts.forEach { items.add(ThirdAppsShortcutItem.Shortcut(it)) }
+    updateTab(binding.btnStatic, R.string.shortcuts_tab_static, staticShortcuts.size)
+    updateTab(binding.btnDynamic, R.string.shortcuts_tab_dynamic, dynamicShortcuts.size)
+    updateTab(binding.btnApps, R.string.shortcuts_tab_apps, apps.size)
+
+    val firstVisible = listOf(binding.btnStatic, binding.btnDynamic, binding.btnApps)
+      .firstOrNull { it.isVisible }
+
+    binding.toggleGroup.isVisible = firstVisible != null
+
+    if (firstVisible != null) {
+      binding.toggleGroup.check(firstVisible.id)
+      showGroup(firstVisible.id)
+    } else {
+      mAdapter.setNewData(mutableListOf())
+    }
+  }
+
+  private fun updateTab(button: MaterialButton, titleRes: Int, count: Int) {
+    button.text = getString(titleRes, count)
+    button.isVisible = count > 0
+  }
+
+  private fun showGroup(checkedId: Int) {
+    val items: List<ThirdAppsShortcutItem> = when (checkedId) {
+      R.id.btn_static -> staticShortcuts.map { ThirdAppsShortcutItem.Shortcut(it) }
+      R.id.btn_dynamic -> dynamicShortcuts.map { ThirdAppsShortcutItem.Shortcut(it) }
+      R.id.btn_apps -> apps.map { ThirdAppsShortcutItem.App(it) }
+      else -> emptyList()
     }
 
-    if (dynamicShortcuts.isNotEmpty()) {
-      items.add(
-        ThirdAppsShortcutItem.Header(getString(R.string.shortcuts_section_dynamic, dynamicShortcuts.size))
-      )
-      dynamicShortcuts.forEach { items.add(ThirdAppsShortcutItem.Shortcut(it)) }
-    }
-
-    if (apps.isNotEmpty()) {
-      items.add(
-        ThirdAppsShortcutItem.Header(getString(R.string.shortcuts_section_apps, apps.size))
-      )
-      apps.forEach { items.add(ThirdAppsShortcutItem.App(it)) }
-    }
-
-    mAdapter.setNewData(items)
+    mAdapter.setNewData(items.toMutableList())
+    binding.list.scrollToPosition(0)
   }
 
   private fun launchShortcut(shortcut: ThirdAppShortcut) {
