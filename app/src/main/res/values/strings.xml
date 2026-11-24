@@ -420,6 +420,7 @@
   <string name="btn_cloud_rules">Cloud Rules</string>
   <string name="btn_cloud_rules_2">QuickShort Rules</string>
   <string name="cloud_rules_2_unsupported">This rule type is not supported yet</string>
+  <string name="cloud_rules_2_collection">Collection · tap to open</string>
   <string name="cloud_rules_2_load_failed">Failed to load rules, please check your network</string>
   <string name="btn_third_apps_shortcut">Third Apps Shortcuts</string>
 

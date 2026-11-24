@@ -24,9 +24,44 @@ object QuickShortRuleConverter {
   private const val SWITCH_ITEM_TYPE_SHELL = 3
   private const val SWITCH_OFF = "off"
 
+  private const val EXTRA_KEY_URL = "url"
+  private const val EXTRA_KEY_TITLE = "title"
+
   sealed class Result {
     data class Supported(val entity: AnywhereEntity) : Result()
     data class Unsupported(val reason: String) : Result()
+  }
+
+  /**
+   * A rule pack ("合集") is a normal activity rule whose extras send QuickShort to another rules
+   * JSON file. The activity belongs to QuickShort itself, so there is nothing to convert; the
+   * linked file has to be listed instead.
+   */
+  data class Collection(val title: String, val url: String)
+
+  fun collectionOf(rule: QuickShortRule): Collection? {
+    if (rule.type != TYPE_ACTIVITY) {
+      return null
+    }
+
+    val bundle = parseExtraBean(rule.extras.orEmpty()) ?: return null
+    val url = bundle.extras
+      .firstOrNull { it.key == EXTRA_KEY_URL }
+      ?.value
+      .orEmpty()
+      .trim()
+
+    if (!url.startsWith("http", ignoreCase = true) || !url.endsWith(".json", ignoreCase = true)) {
+      return null
+    }
+
+    val title = bundle.extras
+      .firstOrNull { it.key == EXTRA_KEY_TITLE }
+      ?.value
+      .orEmpty()
+      .trim()
+
+    return Collection(title.ifBlank { rule.displayName }, url)
   }
 
   fun convert(rule: QuickShortRule): Result {

@@ -127,6 +127,91 @@ class QuickShortRuleConverterTest {
   }
 
   @Test
+  fun detectsRuleCollection() {
+    val rule = parse(
+      """
+      {
+        "title": "A 支付宝合集",
+        "pkg": "com.syyf.quickpay",
+        "path": "com.syyf.quickpay.act.RulesActivity",
+        "extras": "{\"action\":\"\",\"category\":\"\",\"data\":\"\",\"extras\":[{\"key\":\"url\",\"type\":\"--es\",\"value\":\"https://gitee.com/night99/filebackup/raw/master/quickpay/rule/rules-alipay.json\"},{\"key\":\"title\",\"type\":\"--es\",\"value\":\"支付宝合集\"}]}",
+        "type": 0
+      }
+      """
+    )
+
+    val collection = QuickShortRuleConverter.collectionOf(rule)
+
+    assertTrue(collection != null)
+    assertEquals("支付宝合集", collection?.title)
+    assertEquals(
+      "https://gitee.com/night99/filebackup/raw/master/quickpay/rule/rules-alipay.json",
+      collection?.url
+    )
+  }
+
+  @Test
+  fun collectionFallsBackToRuleTitle() {
+    val rule = parse(
+      """
+      {
+        "title": "A 微信合集",
+        "extras": "{\"extras\":[{\"key\":\"url\",\"type\":\"--es\",\"value\":\"https://example.com/rules-wx.json\"}]}",
+        "type": 0
+      }
+      """
+    )
+
+    assertEquals("A 微信合集", QuickShortRuleConverter.collectionOf(rule)?.title)
+  }
+
+  @Test
+  fun ignoresRuleWithoutCollectionUrl() {
+    val rule = parse(
+      """
+      {
+        "title": "电池信息",
+        "extras": "{\"action\":\"android.intent.action.POWER_USAGE_SUMMARY\",\"extras\":[]}",
+        "type": 0
+      }
+      """
+    )
+
+    assertTrue(QuickShortRuleConverter.collectionOf(rule) == null)
+  }
+
+  @Test
+  fun ignoresNonJsonCollectionUrl() {
+    val rule = parse(
+      """
+      {
+        "title": "Not a collection",
+        "extras": "{\"extras\":[{\"key\":\"url\",\"type\":\"--es\",\"value\":\"https://example.com/page.html\"}]}",
+        "type": 0
+      }
+      """
+    )
+
+    assertTrue(QuickShortRuleConverter.collectionOf(rule) == null)
+  }
+
+  @Test
+  fun ignoresCollectionUrlOnNonActivityRule() {
+    val rule = parse(
+      """
+      {
+        "title": "URL rule",
+        "path": "https://example.com/rules.json",
+        "extras": "{\"extras\":[{\"key\":\"url\",\"type\":\"--es\",\"value\":\"https://example.com/rules.json\"}]}",
+        "type": 2
+      }
+      """
+    )
+
+    assertTrue(QuickShortRuleConverter.collectionOf(rule) == null)
+  }
+
+  @Test
   fun rejectsUnknownRuleType() {
     val rule = parse("""{"title":"Unknown","path":"something","type":99}""")
 

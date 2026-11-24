@@ -45,6 +45,9 @@ class QuickShortRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
   private var mList = listOf<QuickShortRule>()
   private var isListReady = false
 
+  /** Set when this page shows a rule pack instead of the top level list. */
+  private var rulesUrl: String? = null
+
   override fun setViewBinding() = ActivityCloudRulesBinding.inflate(layoutInflater)
 
   override fun getToolBar() = binding.toolbar.toolBar
@@ -53,6 +56,10 @@ class QuickShortRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    rulesUrl = intent.getStringExtra(EXTRA_URL)
+    intent.getStringExtra(EXTRA_TITLE)
+      ?.takeIf { it.isNotBlank() }
+      ?.let { supportActionBar?.title = it }
     requestRules()
   }
 
@@ -113,6 +120,17 @@ class QuickShortRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
   }
 
   private fun openRule(rule: QuickShortRule) {
+    val collection = QuickShortRuleConverter.collectionOf(rule)
+    if (collection != null) {
+      startActivity(
+        Intent(this, QuickShortRulesActivity::class.java).apply {
+          putExtra(EXTRA_URL, collection.url)
+          putExtra(EXTRA_TITLE, collection.title)
+        }
+      )
+      return
+    }
+
     when (val result = QuickShortRuleConverter.convert(rule)) {
       is QuickShortRuleConverter.Result.Supported -> {
         val entity = result.entity.apply {
@@ -133,11 +151,14 @@ class QuickShortRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
 
   private fun requestRules() {
     binding.progressHorizontal.show()
-    val retrofit = Retrofit.Builder()
+    val api = Retrofit.Builder()
       .baseUrl(ApiManager.QUICK_SHORT_RULES_RAW_URL)
       .addConverterFactory(GsonConverterFactory.create())
       .build()
-    val request = retrofit.create(RuleApi::class.java).requestQuickShortRules()
+      .create(RuleApi::class.java)
+    val request = rulesUrl
+      ?.let { api.requestQuickShortRulesFrom(it) }
+      ?: api.requestQuickShortRules()
 
     request.enqueue(object : Callback<QuickShortRulesResponse> {
       override fun onResponse(
@@ -158,5 +179,10 @@ class QuickShortRulesActivity : AppBarActivity<ActivityCloudRulesBinding>(),
         ToastUtil.makeText(this@QuickShortRulesActivity, R.string.cloud_rules_2_load_failed)
       }
     })
+  }
+
+  companion object {
+    private const val EXTRA_URL = "extra_url"
+    private const val EXTRA_TITLE = "extra_title"
   }
 }
