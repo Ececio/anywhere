@@ -15,7 +15,7 @@ object ShellManager {
   }
 
   fun exec(command: String): String {
-    return Shell.cmd(command).exec().out.toString()
+    return Shell.cmd(command).exec().out.joinToString("\n")
   }
 
   fun acquireRoot(): Boolean {

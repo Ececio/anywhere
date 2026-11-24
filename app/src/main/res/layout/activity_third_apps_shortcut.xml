@@ -14,6 +14,18 @@
     android:id="@+id/toolbar"
     layout="@layout/toolbar" />
 
+  <com.google.android.material.progressindicator.LinearProgressIndicator
+    android:id="@+id/progress_horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="?actionBarSize"
+    android:indeterminate="true"
+    android:visibility="gone"
+    app:hideAnimationBehavior="outward"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
   <rikka.widget.borderview.BorderRecyclerView
     android:id="@+id/list"
     android:layout_width="match_parent"

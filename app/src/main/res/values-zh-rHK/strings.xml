@@ -448,6 +448,10 @@
     <string name="none">無</string>
     <string name="bsd_exec_with_root">使用 root 執行</string>
     <string name="btn_third_apps_shortcut">其它程式的快捷方式</string>
+    <string name="shortcuts_section_static">靜態捷徑（%1$d）</string>
+    <string name="shortcuts_section_dynamic">動態捷徑（%1$d）</string>
+    <string name="shortcuts_section_apps">透過應用程式建立（%1$d）</string>
+    <string name="shortcuts_load_failed">一般模式下無法讀取捷徑，請切換到 Root 或 Shizuku 模式並確保已授權</string>
     <string name="dialog_title_a11y_announcement_message">Anywhere- 使用無障礙權限來執行一些自動化操作。 Anywhere- 完全開源，並且承諾不會利用無障礙權限損害您的設備，您可以點擊查看源代碼。</string>
   <string name="dialog_title_a11y_announcement">無障礙聲明</string>
   <string name="dialog_deny_button">拒絕</string>

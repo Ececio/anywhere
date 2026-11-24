@@ -1,6 +1,7 @@
 package com.absinthe.anywhere_.ui.shortcuts
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -8,15 +9,25 @@ import android.content.pm.ResolveInfo
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.annotation.CallSuper
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.absinthe.anywhere_.AppBarActivity
 import com.absinthe.anywhere_.BuildConfig
+import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.adapter.shortcut.ThirdAppsShortcutAdapter
+import com.absinthe.anywhere_.adapter.shortcut.ThirdAppsShortcutItem
+import com.absinthe.anywhere_.constants.Const
+import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.databinding.ActivityThirdAppsShortcutBinding
+import com.absinthe.anywhere_.model.ThirdAppShortcut
+import com.absinthe.anywhere_.utils.CommandUtils
+import com.absinthe.anywhere_.utils.ShortcutDumpParser
 import com.absinthe.anywhere_.utils.ToastUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import rikka.widget.borderview.BorderView
 import timber.log.Timber
-
 
 class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBinding>() {
 
@@ -40,7 +51,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
         }
     }
 
-    mAdapter.setList(getResolveInfoList())
+    val apps = getResolveInfoList()
 
     val resultLauncher = registerForActivityResult(OpenCreateShortcut()) {
       it?.let {
@@ -55,9 +66,139 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     }
 
     mAdapter.setOnItemClickListener { _, _, position ->
-      val info = mAdapter.data[position]
-      resultLauncher.launch(info)
+      when (val item = mAdapter.data.getOrNull(position)) {
+        is ThirdAppsShortcutItem.App -> resultLauncher.launch(item.info)
+        is ThirdAppsShortcutItem.Shortcut -> launchShortcut(item.shortcut)
+        else -> Timber.d("Unclickable shortcut list item")
+      }
     }
+
+    binding.progressHorizontal.show()
+    lifecycleScope.launch {
+      val shortcuts = withContext(Dispatchers.IO) { loadShortcuts() }
+      binding.progressHorizontal.hide()
+
+      render(apps, shortcuts)
+
+      if (shortcuts == null) {
+        ToastUtil.makeText(this@ThirdAppsShortcutActivity, R.string.shortcuts_load_failed)
+      }
+    }
+  }
+
+  private fun render(apps: List<ResolveInfo>, shortcuts: List<ThirdAppShortcut>?) {
+    val items = mutableListOf<ThirdAppsShortcutItem>()
+    val staticShortcuts = shortcuts.orEmpty().filter { it.kind == ShortcutDumpParser.Kind.STATIC }
+    val dynamicShortcuts = shortcuts.orEmpty().filter { it.kind == ShortcutDumpParser.Kind.DYNAMIC }
+
+    if (staticShortcuts.isNotEmpty()) {
+      items.add(
+        ThirdAppsShortcutItem.Header(getString(R.string.shortcuts_section_static, staticShortcuts.size))
+      )
+      staticShortcuts.forEach { items.add(ThirdAppsShortcutItem.Shortcut(it)) }
+    }
+
+    if (dynamicShortcuts.isNotEmpty()) {
+      items.add(
+        ThirdAppsShortcutItem.Header(getString(R.string.shortcuts_section_dynamic, dynamicShortcuts.size))
+      )
+      dynamicShortcuts.forEach { items.add(ThirdAppsShortcutItem.Shortcut(it)) }
+    }
+
+    if (apps.isNotEmpty()) {
+      items.add(
+        ThirdAppsShortcutItem.Header(getString(R.string.shortcuts_section_apps, apps.size))
+      )
+      apps.forEach { items.add(ThirdAppsShortcutItem.App(it)) }
+    }
+
+    mAdapter.setNewData(items)
+  }
+
+  private fun launchShortcut(shortcut: ThirdAppShortcut) {
+    try {
+      startActivity(shortcut.toIntent())
+    } catch (t: Throwable) {
+      Timber.w(t, "Can not launch shortcut %s/%s", shortcut.packageName, shortcut.id)
+      val messageRes = when (t) {
+        is ActivityNotFoundException -> R.string.toast_no_react_url
+        is SecurityException -> R.string.toast_security_exception
+        else -> R.string.toast_runtime_error
+      }
+      ToastUtil.makeText(this, messageRes)
+    }
+  }
+
+  /**
+   * Static and dynamic shortcuts of other apps are not readable through the public APIs unless
+   * this app is the default launcher, so ask a root or Shizuku shell for the shortcut dump.
+   */
+  private fun loadShortcuts(): List<ThirdAppShortcut>? {
+    if (GlobalValues.workingMode == Const.WORKING_MODE_URL_SCHEME) {
+      return null
+    }
+
+    val dump = try {
+      CommandUtils.execAdbCmd("dumpsys shortcut")
+    } catch (t: Throwable) {
+      Timber.e(t)
+      return null
+    }
+
+    if (!dump.contains("ShortcutInfo {")) {
+      Timber.w("Shortcut dump is empty: %s", dump.take(120))
+      return null
+    }
+
+    return ShortcutDumpParser.parse(dump)
+      .asSequence()
+      .filter { it.packageName != BuildConfig.APPLICATION_ID }
+      .mapNotNull { toThirdAppShortcut(it) }
+      .sortedWith(compareBy({ it.appLabel.lowercase() }, { it.rank }, { it.label }))
+      .toList()
+  }
+
+  private fun toThirdAppShortcut(shortcut: ShortcutDumpParser.Shortcut): ThirdAppShortcut? {
+    val appInfo = try {
+      packageManager.getApplicationInfo(shortcut.packageName, 0)
+    } catch (t: PackageManager.NameNotFoundException) {
+      Timber.d(t, "Skip shortcut of uninstalled package %s", shortcut.packageName)
+      return null
+    }
+
+    val appLabel = runCatching {
+      packageManager.getApplicationLabel(appInfo).toString()
+    }.getOrDefault(shortcut.packageName)
+
+    val appIcon = runCatching {
+      packageManager.getApplicationIcon(appInfo)
+    }.getOrNull()
+
+    val shortcutIcon = shortcut.iconResId
+      .takeIf { it != 0 }
+      ?.let { resId ->
+        runCatching {
+          packageManager.getResourcesForApplication(appInfo).getDrawable(resId, null)
+        }.getOrNull()
+      }
+
+    return ThirdAppShortcut(
+      id = shortcut.id,
+      packageName = shortcut.packageName,
+      appLabel = appLabel,
+      label = shortcut.label,
+      kind = shortcut.kind,
+      rank = shortcut.rank,
+      action = shortcut.action,
+      data = shortcut.data,
+      mimeType = shortcut.mimeType,
+      flags = shortcut.flags,
+      targetPackage = shortcut.targetPackage,
+      component = shortcut.component,
+      categories = shortcut.categories,
+      extras = shortcut.extras,
+      icon = shortcutIcon ?: appIcon
+    )
   }
 
   private fun getResolveInfoList(): List<ResolveInfo> {
