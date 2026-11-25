@@ -1,9 +1,12 @@
 package com.absinthe.anywhere_.ui.editor.impl
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
 import com.absinthe.anywhere_.AnywhereApplication
 import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.adapter.card.ExtrasAdapter
@@ -16,8 +19,11 @@ import com.absinthe.anywhere_.model.database.setExecWithRoot
 import com.absinthe.anywhere_.ui.editor.BaseEditorFragment
 import com.absinthe.anywhere_.utils.ActivityNameResolver
 import com.absinthe.anywhere_.utils.AppUtils
+import com.absinthe.anywhere_.utils.CardIconStore
 import com.absinthe.anywhere_.utils.ShortcutsUtils
+import com.absinthe.anywhere_.utils.UxUtils
 import com.absinthe.anywhere_.utils.handler.Opener
+import com.absinthe.libraries.utils.extensions.dp
 import com.blankj.utilcode.util.ActivityUtils
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -27,6 +33,17 @@ class AnywhereEditorFragment : BaseEditorFragment() {
   private lateinit var binding: EditorAnywhereBinding
   private val adapter = ExtrasAdapter()
 
+  /**
+   * Pending icon, kept apart from [item] so [doneEdit] can still tell whether the card changed.
+   * Mutating [item] directly would make it equal to [doneItem] and skip the database update.
+   */
+  private var iconUri: String? = null
+
+  private val pickIconLauncher =
+    registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+      uri?.let { setIcon(it) }
+    }
+
   override fun setBinding(inflater: LayoutInflater, container: ViewGroup?): View {
     binding = EditorAnywhereBinding.inflate(inflater, container, false)
     return binding.root
@@ -35,6 +52,7 @@ class AnywhereEditorFragment : BaseEditorFragment() {
   @SuppressLint("SetTextI18n")
   override fun initView() {
     item.let {
+      iconUri = it.iconUri
       val extraBean: ExtraBean? = try {
         Gson().fromJson(it.param3, ExtraBean::class.java)
       } catch (e: JsonSyntaxException) {
@@ -67,6 +85,9 @@ class AnywhereEditorFragment : BaseEditorFragment() {
         rvExtras.apply {
           adapter = this@AnywhereEditorFragment.adapter
         }
+        iconRow.setOnClickListener { pickIcon() }
+        btnResetIcon.setOnClickListener { restoreIcon() }
+        updateIconPreview()
         extraBean?.apply {
           tietIntentAction.setText(action)
           tietIntentData.setText(data)
@@ -89,6 +110,32 @@ class AnywhereEditorFragment : BaseEditorFragment() {
         }
       }
     }
+  }
+
+  /** Opens the image picker for the card icon. */
+  fun pickIcon() {
+    pickIconLauncher.launch("image/*")
+  }
+
+  /** Drops the custom icon, so the card falls back to the package icon. */
+  fun restoreIcon() {
+    iconUri = ""
+    updateIconPreview()
+  }
+
+  private fun setIcon(uri: Uri) {
+    iconUri = CardIconStore.copyFrom(
+      requireContext(),
+      uri,
+      "custom_${item.id}_${System.currentTimeMillis()}"
+    ) ?: uri.toString()
+    updateIconPreview()
+  }
+
+  private fun updateIconPreview() {
+    val preview = item.copy().apply { iconUri = this@AnywhereEditorFragment.iconUri }
+    binding.ivIcon.setImageDrawable(UxUtils.getEntityIcon(requireContext(), preview, 45.dp))
+    binding.btnResetIcon.isVisible = !iconUri.isNullOrEmpty()
   }
 
   override fun tryRunning() {
@@ -119,6 +166,7 @@ class AnywhereEditorFragment : BaseEditorFragment() {
         extras = extras
       )
       param3 = Gson().toJson(extraBean)
+      iconUri = this@AnywhereEditorFragment.iconUri
     }
     Opener.with(requireContext()).load(doneItem).open()
   }
@@ -155,6 +203,7 @@ class AnywhereEditorFragment : BaseEditorFragment() {
       )
       param3 = Gson().toJson(extraBean)
       setExecWithRoot(execWithRoot)
+      iconUri = this@AnywhereEditorFragment.iconUri
     }
 
     if (super.doneEdit()) return true

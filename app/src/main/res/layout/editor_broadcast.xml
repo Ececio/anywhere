@@ -4,7 +4,7 @@
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:layout_marginHorizontal="@dimen/bsd_edit_text_margin_horizontal"
-  android:layout_marginVertical="@dimen/bsd_margin_vertical"
+  android:layout_marginVertical="@dimen/editor_margin_vertical"
   android:background="@color/transparent"
   android:clipChildren="false"
   android:clipToPadding="false">
@@ -21,6 +21,7 @@
     app:layout_constraintTop_toTopOf="parent">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_app_name"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -42,6 +43,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_app_name">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_description"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -63,6 +65,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_description">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_intent_action"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -83,6 +86,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_intent_action">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_intent_package"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -103,6 +107,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_intent_package">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_intent_class"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -123,6 +128,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_intent_class">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_intent_data"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

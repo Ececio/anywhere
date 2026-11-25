@@ -4,7 +4,7 @@
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:layout_marginHorizontal="@dimen/bsd_edit_text_margin_horizontal"
-  android:layout_marginVertical="@dimen/bsd_margin_vertical"
+  android:layout_marginVertical="@dimen/editor_margin_vertical"
   android:background="@color/transparent">
 
   <Button
@@ -28,6 +28,7 @@
     app:layout_constraintTop_toBottomOf="@id/btn_url_scheme_community">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_app_name"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -50,6 +51,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_app_name">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_url_scheme"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -73,6 +75,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_url_scheme">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_dynamic_params"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -96,6 +99,7 @@
     app:layout_constraintTop_toBottomOf="@id/til_dynamic_params">
 
     <com.google.android.material.textfield.TextInputEditText
+      style="@style/Widget.Anywhere.TextInputEditText.Compact"
       android:id="@+id/tiet_description"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

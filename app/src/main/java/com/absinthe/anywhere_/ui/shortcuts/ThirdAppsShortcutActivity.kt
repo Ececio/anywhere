@@ -8,12 +8,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.Menu
 import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.annotation.CallSuper
 import androidx.appcompat.widget.SearchView
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,6 +40,7 @@ import com.absinthe.anywhere_.model.database.AnywhereEntity
 import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
 import com.absinthe.anywhere_.ui.editor.EXTRA_ENTITY
 import com.absinthe.anywhere_.ui.editor.EditorActivity
+import com.absinthe.anywhere_.utils.CardIconStore
 import com.absinthe.anywhere_.utils.CommandUtils
 import com.absinthe.anywhere_.utils.ShortcutDumpParser
 import com.absinthe.anywhere_.utils.ThirdAppShortcutConverter
@@ -222,13 +226,18 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
    */
   private fun openEditor(shortcut: ThirdAppShortcut) {
     val component = resolveComponent(shortcut.toIntent())
-    openEditor(
-      ThirdAppShortcutConverter.toEntity(
-        shortcut = shortcut,
-        resolvedPackage = component?.packageName,
-        resolvedClass = component?.className
-      )
+    val entity = ThirdAppShortcutConverter.toEntity(
+      shortcut = shortcut,
+      resolvedPackage = component?.packageName,
+      resolvedClass = component?.className
     )
+    // Keep the shortcut's own icon; the card would otherwise fall back to the app icon.
+    entity.iconUri = saveShortcutIcon(
+      key = "${shortcut.packageName}_${shortcut.id}",
+      drawable = shortcut.icon
+    ).orEmpty()
+
+    openEditor(entity)
   }
 
   private fun openEditor(draft: ShortcutDraft) {
@@ -243,18 +252,29 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
       }.getOrDefault(packageName)
     }
 
-    openEditor(
-      ThirdAppShortcutConverter.toEntity(
-        name = draft.name,
-        appLabel = appLabel,
-        packageName = packageName,
-        className = component?.className,
-        action = draft.intent.action.orEmpty(),
-        data = draft.intent.dataString.orEmpty(),
-        extras = draft.intent.extras.toExtraItems()
-      )
+    val entity = ThirdAppShortcutConverter.toEntity(
+      name = draft.name,
+      appLabel = appLabel,
+      packageName = packageName,
+      className = component?.className,
+      action = draft.intent.action.orEmpty(),
+      data = draft.intent.dataString.orEmpty(),
+      extras = draft.intent.extras.toExtraItems()
     )
+    entity.iconUri = saveShortcutIcon(
+      key = "draft_${draft.name}_${draft.intent.toUri(0)}",
+      drawable = draft.icon
+    ).orEmpty()
+
+    openEditor(entity)
   }
+
+  /**
+   * Saves a shortcut icon next to the database and returns a `file://` URI for
+   * [AnywhereEntity.iconUri], which the card and the pinned shortcut list already understand.
+   */
+  private fun saveShortcutIcon(key: String, drawable: Drawable?): String? =
+    CardIconStore.saveDrawable(this, key, drawable)
 
   private fun openEditor(entity: AnywhereEntity) {
     entity.category = GlobalValues.category
@@ -370,7 +390,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     ).filter { it.activityInfo.applicationInfo.packageName != BuildConfig.APPLICATION_ID }
   }
 
-  private class OpenCreateShortcut : ActivityResultContract<ResolveInfo, ShortcutDraft?>() {
+  private inner class OpenCreateShortcut : ActivityResultContract<ResolveInfo, ShortcutDraft?>() {
     @CallSuper
     override fun createIntent(context: Context, input: ResolveInfo): Intent {
       return Intent(Intent.ACTION_CREATE_SHORTCUT).apply {
@@ -399,12 +419,30 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
         intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT) as? Intent ?: return null
       val name = intent.getStringExtra(Intent.EXTRA_SHORTCUT_NAME).orEmpty()
 
-      return ShortcutDraft(name, shortcutIntent)
+      return ShortcutDraft(name, shortcutIntent, parseIcon(intent))
+    }
+
+    private fun parseIcon(intent: Intent): Drawable? {
+      val iconResource = intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE)
+        as? Intent.ShortcutIconResource
+      if (iconResource != null) {
+        return runCatching {
+          val resources = packageManager.getResourcesForApplication(iconResource.packageName)
+          val id = resources.getIdentifier(
+            iconResource.resourceName, null, iconResource.packageName
+          )
+          if (id != 0) resources.getDrawable(id, null) else null
+        }.getOrNull()
+      }
+
+      return (intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_ICON) as? Bitmap)
+        ?.toDrawable(resources)
     }
   }
 
   private data class ShortcutDraft(
     val name: String,
-    val intent: Intent
+    val intent: Intent,
+    val icon: Drawable?
   )
 }

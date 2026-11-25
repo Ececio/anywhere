@@ -33,6 +33,7 @@ import com.absinthe.anywhere_.model.viewholder.FlowStepBean
 import com.absinthe.anywhere_.services.overlay.IOverlayService
 import com.absinthe.anywhere_.services.overlay.OverlayService
 import com.absinthe.anywhere_.ui.dialog.EXTRA_FROM_WORKFLOW
+import com.absinthe.anywhere_.ui.editor.impl.AnywhereEditorFragment
 import com.absinthe.anywhere_.ui.editor.impl.WorkflowEditorFragment
 import com.absinthe.anywhere_.utils.*
 import com.absinthe.anywhere_.utils.AppUtils.atLeastNMR1
@@ -383,25 +384,35 @@ class EditorActivity : BaseActivity<ActivityEditorBinding>() {
             )
           }
           R.id.custom_icon -> {
-            try {
-              setDocumentResult("image/*") {
-                val ae = entity.copy().apply {
-                  iconUri = it.toString()
+            val iconEditor = editor as? AnywhereEditorFragment
+            if (iconEditor != null) {
+              iconEditor.pickIcon()
+            } else {
+              try {
+                setDocumentResult("image/*") {
+                  val ae = entity.copy().apply {
+                    iconUri = it.toString()
+                  }
+                  AnywhereApplication.sRepository.update(ae)
+                  onBackPressed()
                 }
-                AnywhereApplication.sRepository.update(ae)
-                onBackPressed()
+              } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
+                ToastUtil.makeText(R.string.toast_no_document_app)
               }
-            } catch (e: ActivityNotFoundException) {
-              e.printStackTrace()
-              ToastUtil.makeText(R.string.toast_no_document_app)
             }
           }
           R.id.restore_icon -> {
-            val ae = entity.copy().apply {
-              iconUri = ""
+            val iconEditor = editor as? AnywhereEditorFragment
+            if (iconEditor != null) {
+              iconEditor.restoreIcon()
+            } else {
+              val ae = entity.copy().apply {
+                iconUri = ""
+              }
+              AnywhereApplication.sRepository.update(ae)
+              onBackPressed()
             }
-            AnywhereApplication.sRepository.update(ae)
-            onBackPressed()
           }
           R.id.share_to_cloud -> {
             AppUtils.sendEntityToMailBox(this@EditorActivity, entity)
