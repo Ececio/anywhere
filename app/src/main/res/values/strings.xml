@@ -427,6 +427,7 @@
   <string name="shortcuts_tab_dynamic">Dynamic (%1$d)</string>
   <string name="shortcuts_tab_apps">Via apps (%1$d)</string>
   <string name="shortcuts_load_failed">Shortcuts are unavailable in Normal mode. Switch to Root or Shizuku and grant permission</string>
+  <string name="shortcuts_search_hint">Search shortcuts</string>
 
   <string name="btn_acquire_permission">Grant</string>
   <string name="btn_acquired">Granted</string>

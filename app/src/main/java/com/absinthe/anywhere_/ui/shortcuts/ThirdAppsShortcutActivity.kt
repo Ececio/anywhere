@@ -1,14 +1,19 @@
 package com.absinthe.anywhere_.ui.shortcuts
 
+import android.animation.LayoutTransition
 import android.app.Activity
+import android.app.SearchManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.os.Bundle
+import android.view.Menu
+import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.annotation.CallSuper
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -43,7 +48,8 @@ import kotlinx.coroutines.withContext
 import rikka.widget.borderview.BorderView
 import timber.log.Timber
 
-class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBinding>() {
+class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBinding>(),
+  SearchView.OnQueryTextListener {
 
   override fun setViewBinding() = ActivityThirdAppsShortcutBinding.inflate(layoutInflater)
 
@@ -56,6 +62,12 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
   private var apps: List<ResolveInfo> = emptyList()
   private var staticShortcuts: List<ThirdAppShortcut> = emptyList()
   private var dynamicShortcuts: List<ThirdAppShortcut> = emptyList()
+
+  /** Current search text, applied to whichever group is visible. */
+  private var query: String = ""
+
+  private var currentGroupId: Int = 0
+  private var isListReady = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -123,6 +135,42 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     } else {
       mAdapter.setNewData(mutableListOf())
     }
+
+    isListReady = true
+    invalidateOptionsMenu()
+  }
+
+  override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    menuInflater.inflate(R.menu.third_apps_shortcut_menu, menu)
+
+    val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+    val searchView = menu.findItem(R.id.search).actionView as SearchView
+    searchView.findViewById<LinearLayout>(androidx.appcompat.R.id.search_bar)?.layoutTransition =
+      LayoutTransition()
+
+    searchView.apply {
+      isQueryRefinementEnabled = true
+      setIconifiedByDefault(false)
+      setSearchableInfo(searchManager.getSearchableInfo(componentName))
+      setQueryHint(getString(R.string.shortcuts_search_hint))
+      setOnQueryTextListener(this@ThirdAppsShortcutActivity)
+    }
+
+    menu.findItem(R.id.search).isVisible = isListReady
+
+    return true
+  }
+
+  override fun onQueryTextSubmit(query: String): Boolean {
+    return false
+  }
+
+  override fun onQueryTextChange(newText: String): Boolean {
+    query = newText.trim()
+    if (currentGroupId != 0) {
+      showGroup(currentGroupId)
+    }
+    return false
   }
 
   private fun updateTab(button: MaterialButton, titleRes: Int, count: Int) {
@@ -131,6 +179,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
   }
 
   private fun showGroup(checkedId: Int) {
+    currentGroupId = checkedId
     val items: List<ThirdAppsShortcutItem> = when (checkedId) {
       R.id.btn_static -> staticShortcuts.map { ThirdAppsShortcutItem.Shortcut(it) }
       R.id.btn_dynamic -> dynamicShortcuts.map { ThirdAppsShortcutItem.Shortcut(it) }
@@ -138,8 +187,33 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
       else -> emptyList()
     }
 
-    mAdapter.setNewData(items.toMutableList())
+    val filtered = if (query.isBlank()) items else items.filter { it.matches(query) }
+
+    mAdapter.setNewData(filtered.toMutableList())
     binding.list.scrollToPosition(0)
+  }
+
+  /**
+   * Matches a shortcut or an app by its displayed name, the app name and the package name, so a
+   * shortcut can be found by either the shortcut label or the app it belongs to.
+   */
+  private fun ThirdAppsShortcutItem.matches(query: String): Boolean {
+    return when (this) {
+      is ThirdAppsShortcutItem.App -> {
+        val activityInfo = info.activityInfo
+        val label = activityInfo.loadLabel(packageManager)?.toString().orEmpty()
+        val appLabel = activityInfo.applicationInfo?.loadLabel(packageManager)?.toString().orEmpty()
+        activityInfo.packageName.contains(query, ignoreCase = true) ||
+          label.contains(query, ignoreCase = true) ||
+          appLabel.contains(query, ignoreCase = true)
+      }
+
+      is ThirdAppsShortcutItem.Shortcut -> {
+        shortcut.label.contains(query, ignoreCase = true) ||
+          shortcut.appLabel.contains(query, ignoreCase = true) ||
+          shortcut.packageName.contains(query, ignoreCase = true)
+      }
+    }
   }
 
   /**

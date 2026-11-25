@@ -452,6 +452,7 @@
   <string name="shortcuts_tab_dynamic">动态 (%1$d)</string>
   <string name="shortcuts_tab_apps">通过应用 (%1$d)</string>
   <string name="shortcuts_load_failed">普通模式下无法读取快捷方式，请切换到 Root 或 Shizuku 模式并确保已授权</string>
+  <string name="shortcuts_search_hint">搜索快捷方式</string>
   <string name="dialog_title_a11y_announcement_message">Anywhere- 使用无障碍权限来执行一些自动化操作。Anywhere- 完全开源，并且承诺不会利用无障碍权限损害您的设备，您可以点击查看源代码。</string>
   <string name="dialog_title_a11y_announcement">无障碍声明</string>
   <string name="dialog_allow_button">允许</string>
