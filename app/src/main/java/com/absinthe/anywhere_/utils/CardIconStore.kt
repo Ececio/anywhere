@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import timber.log.Timber
@@ -32,8 +33,16 @@ object CardIconStore {
     return runCatching {
       val bitmap = Bitmap.createBitmap(ICON_SIZE, ICON_SIZE, Bitmap.Config.ARGB_8888)
       val canvas = Canvas(bitmap)
-      drawable.setBounds(0, 0, ICON_SIZE, ICON_SIZE)
-      drawable.draw(canvas)
+      // The caller may still be showing this drawable (the shortcut list rebinds its rows with the
+      // same instance). Leaving the 192 px bounds behind makes the list icon grow when it redraws,
+      // so restore the original bounds once the icon is captured.
+      val previousBounds = Rect(drawable.bounds)
+      try {
+        drawable.setBounds(0, 0, ICON_SIZE, ICON_SIZE)
+        drawable.draw(canvas)
+      } finally {
+        drawable.bounds = previousBounds
+      }
       saveBitmap(context, key, bitmap)
     }.onFailure {
       Timber.w(it, "Unable to save the icon %s", key)
