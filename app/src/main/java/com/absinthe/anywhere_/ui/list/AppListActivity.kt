@@ -7,6 +7,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
@@ -27,6 +29,7 @@ import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
 import com.absinthe.anywhere_.ui.editor.EXTRA_ENTITY
 import com.absinthe.anywhere_.ui.editor.EditorActivity
 import com.absinthe.anywhere_.utils.AppUtils.getAppList
+import com.absinthe.anywhere_.utils.clearFocusOnOutsideTouch
 import com.absinthe.libraries.utils.extensions.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,6 +48,7 @@ class AppListActivity : AppBarActivity<ActivityAppListBinding>(), SearchView.OnQ
   private var mItems = mutableListOf<AppListBean>()
   private var initDataJob: Job? = null
   private var isDataInit = false
+  private var mSearchView: SearchView? = null
   private val mAdapter: AppListAdapter = AppListAdapter(MODE_APP_LIST)
   private val entryMode by lazy { intent.getIntExtra(EXTRA_APP_LIST_ENTRY_MODE, MODE_NORMAL) }
 
@@ -74,7 +78,13 @@ class AppListActivity : AppBarActivity<ActivityAppListBinding>(), SearchView.OnQ
       setIconifiedByDefault(false)
       setSearchableInfo(searchManager.getSearchableInfo(componentName))
       setOnQueryTextListener(this@AppListActivity)
+      setOnQueryTextFocusChangeListener { _, hasFocus ->
+        if (!hasFocus) {
+          hideSearchKeyboard()
+        }
+      }
     }
+    mSearchView = searchView
 
     // Bug of DayNight lib
     showSystemApp?.apply {
@@ -92,6 +102,17 @@ class AppListActivity : AppBarActivity<ActivityAppListBinding>(), SearchView.OnQ
     }
 
     return true
+  }
+
+  override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+    mSearchView?.clearFocusOnOutsideTouch(this, ev)
+    return super.dispatchTouchEvent(ev)
+  }
+
+  private fun hideSearchKeyboard() {
+    val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val token = mSearchView?.windowToken ?: binding.root.windowToken ?: return
+    inputManager.hideSoftInputFromWindow(token, 0)
   }
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {

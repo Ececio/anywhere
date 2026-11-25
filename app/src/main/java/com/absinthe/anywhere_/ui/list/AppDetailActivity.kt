@@ -10,6 +10,8 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
@@ -28,6 +30,7 @@ import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
 import com.absinthe.anywhere_.ui.editor.EXTRA_ENTITY
 import com.absinthe.anywhere_.ui.editor.EditorActivity
 import com.absinthe.anywhere_.utils.ToastUtil
+import com.absinthe.anywhere_.utils.clearFocusOnOutsideTouch
 import com.blankj.utilcode.util.ActivityUtils
 import com.catchingnow.icebox.sdk_client.IceBox
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +46,7 @@ class AppDetailActivity : AppBarActivity<ActivityAppDetailBinding>(),
 
   private var mAdapter: AppListAdapter = AppListAdapter(MODE_APP_DETAIL)
   private var isListReady = false
+  private var mSearchView: SearchView? = null
   private val mItems = mutableListOf<AppListBean>()
   private val entryMode by lazy { intent.getIntExtra(EXTRA_APP_DETAIL_ENTRY_MODE, MODE_NORMAL) }
 
@@ -186,7 +190,13 @@ class AppDetailActivity : AppBarActivity<ActivityAppDetailBinding>(),
       setIconifiedByDefault(false)
       setSearchableInfo(searchManager.getSearchableInfo(componentName))
       setOnQueryTextListener(this@AppDetailActivity)
+      setOnQueryTextFocusChangeListener { _, hasFocus ->
+        if (!hasFocus) {
+          hideSearchKeyboard()
+        }
+      }
     }
+    mSearchView = searchView
 
     if (!isListReady) {
       menu.findItem(R.id.search).isVisible = false
@@ -194,6 +204,17 @@ class AppDetailActivity : AppBarActivity<ActivityAppDetailBinding>(),
     }
 
     return true
+  }
+
+  override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+    mSearchView?.clearFocusOnOutsideTouch(this, ev)
+    return super.dispatchTouchEvent(ev)
+  }
+
+  private fun hideSearchKeyboard() {
+    val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val token = mSearchView?.windowToken ?: binding.root.windowToken ?: return
+    inputManager.hideSoftInputFromWindow(token, 0)
   }
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
