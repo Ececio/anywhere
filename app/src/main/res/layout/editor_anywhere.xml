@@ -191,17 +191,17 @@
 
   </com.google.android.material.textfield.TextInputLayout>
 
-  <androidx.recyclerview.widget.RecyclerView
+  <com.absinthe.anywhere_.view.app.NonScrollRecyclerView
     android:id="@+id/rv_extras"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/bsd_item_margin_vertical"
     android:layout_marginBottom="@dimen/editor_padding_bottom"
-    android:clipChildren="false"
-    android:clipToPadding="false"
+    android:clipChildren="true"
+    android:clipToPadding="true"
+    android:nestedScrollingEnabled="false"
     android:overScrollMode="never"
     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-    app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintTop_toBottomOf="@id/til_intent_data" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
