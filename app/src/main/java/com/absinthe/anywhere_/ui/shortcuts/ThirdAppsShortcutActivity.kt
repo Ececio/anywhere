@@ -1,7 +1,7 @@
 package com.absinthe.anywhere_.ui.shortcuts
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -20,9 +20,21 @@ import com.absinthe.anywhere_.adapter.shortcut.ThirdAppsShortcutItem
 import com.absinthe.anywhere_.constants.Const
 import com.absinthe.anywhere_.constants.GlobalValues
 import com.absinthe.anywhere_.databinding.ActivityThirdAppsShortcutBinding
+import com.absinthe.anywhere_.model.ExtraBean
+import com.absinthe.anywhere_.model.TYPE_BOOLEAN
+import com.absinthe.anywhere_.model.TYPE_DOUBLE
+import com.absinthe.anywhere_.model.TYPE_FLOAT
+import com.absinthe.anywhere_.model.TYPE_INT
+import com.absinthe.anywhere_.model.TYPE_LONG
+import com.absinthe.anywhere_.model.TYPE_STRING
 import com.absinthe.anywhere_.model.ThirdAppShortcut
+import com.absinthe.anywhere_.model.database.AnywhereEntity
+import com.absinthe.anywhere_.ui.editor.EXTRA_EDIT_MODE
+import com.absinthe.anywhere_.ui.editor.EXTRA_ENTITY
+import com.absinthe.anywhere_.ui.editor.EditorActivity
 import com.absinthe.anywhere_.utils.CommandUtils
 import com.absinthe.anywhere_.utils.ShortcutDumpParser
+import com.absinthe.anywhere_.utils.ThirdAppShortcutConverter
 import com.absinthe.anywhere_.utils.ToastUtil
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.Dispatchers
@@ -59,14 +71,8 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
 
     apps = getResolveInfoList()
 
-    val resultLauncher = registerForActivityResult(OpenCreateShortcut()) {
-      it?.let {
-        runCatching {
-          startActivity(it)
-        }.onFailure { t ->
-          ToastUtil.Toasty.show(this, t.message ?: "Can not open this activity")
-        }
-      } ?: run {
+    val resultLauncher = registerForActivityResult(OpenCreateShortcut()) { draft ->
+      draft?.let { openEditor(it) } ?: run {
         Timber.d("resultLauncher: intent is null")
       }
     }
@@ -74,7 +80,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     mAdapter.setOnItemClickListener { _, _, position ->
       when (val item = mAdapter.data.getOrNull(position)) {
         is ThirdAppsShortcutItem.App -> resultLauncher.launch(item.info)
-        is ThirdAppsShortcutItem.Shortcut -> launchShortcut(item.shortcut)
+        is ThirdAppsShortcutItem.Shortcut -> openEditor(item.shortcut)
         else -> Timber.d("Unclickable shortcut list item")
       }
     }
@@ -136,17 +142,79 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     binding.list.scrollToPosition(0)
   }
 
-  private fun launchShortcut(shortcut: ThirdAppShortcut) {
-    try {
-      startActivity(shortcut.toIntent())
-    } catch (t: Throwable) {
-      Timber.w(t, "Can not launch shortcut %s/%s", shortcut.packageName, shortcut.id)
-      val messageRes = when (t) {
-        is ActivityNotFoundException -> R.string.toast_no_react_url
-        is SecurityException -> R.string.toast_security_exception
-        else -> R.string.toast_runtime_error
+  /**
+   * Opens the regular activity editor pre-filled with the shortcut, so the user can review the
+   * fields and save the card to the current page.
+   */
+  private fun openEditor(shortcut: ThirdAppShortcut) {
+    val component = resolveComponent(shortcut.toIntent())
+    openEditor(
+      ThirdAppShortcutConverter.toEntity(
+        shortcut = shortcut,
+        resolvedPackage = component?.packageName,
+        resolvedClass = component?.className
+      )
+    )
+  }
+
+  private fun openEditor(draft: ShortcutDraft) {
+    val component = resolveComponent(draft.intent)
+    val packageName = component?.packageName ?: draft.intent.`package`.orEmpty()
+    val appLabel = if (packageName.isBlank()) {
+      ""
+    } else {
+      runCatching {
+        packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0))
+          .toString()
+      }.getOrDefault(packageName)
+    }
+
+    openEditor(
+      ThirdAppShortcutConverter.toEntity(
+        name = draft.name,
+        appLabel = appLabel,
+        packageName = packageName,
+        className = component?.className,
+        action = draft.intent.action.orEmpty(),
+        data = draft.intent.dataString.orEmpty(),
+        extras = draft.intent.extras.toExtraItems()
+      )
+    )
+  }
+
+  private fun openEditor(entity: AnywhereEntity) {
+    entity.category = GlobalValues.category
+    startActivity(Intent(this, EditorActivity::class.java).apply {
+      putExtra(EXTRA_ENTITY, entity)
+      putExtra(EXTRA_EDIT_MODE, false)
+    })
+  }
+
+  private fun resolveComponent(intent: Intent): ComponentName? {
+    intent.component?.let { return it }
+    // Do not use MATCH_DEFAULT_ONLY: shortcut intents often carry MAIN/LAUNCHER categories
+    // instead of CATEGORY_DEFAULT.
+    return packageManager.resolveActivity(intent, 0)
+      ?.activityInfo
+      ?.let { ComponentName(it.packageName, it.name) }
+  }
+
+  private fun Bundle?.toExtraItems(): List<ExtraBean.ExtraItem> {
+    if (this == null) {
+      return emptyList()
+    }
+
+    return keySet().mapNotNull { key ->
+      when (val value = get(key)) {
+        is Boolean -> ExtraBean.ExtraItem(TYPE_BOOLEAN, key, value.toString())
+        is Int -> ExtraBean.ExtraItem(TYPE_INT, key, value.toString())
+        is Long -> ExtraBean.ExtraItem(TYPE_LONG, key, value.toString())
+        is Float -> ExtraBean.ExtraItem(TYPE_FLOAT, key, value.toString())
+        is Double -> ExtraBean.ExtraItem(TYPE_DOUBLE, key, value.toString())
+        is String -> ExtraBean.ExtraItem(TYPE_STRING, key, value)
+        is CharSequence -> ExtraBean.ExtraItem(TYPE_STRING, key, value.toString())
+        else -> null
       }
-      ToastUtil.makeText(this, messageRes)
     }
   }
 
@@ -228,7 +296,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     ).filter { it.activityInfo.applicationInfo.packageName != BuildConfig.APPLICATION_ID }
   }
 
-  private class OpenCreateShortcut : ActivityResultContract<ResolveInfo, Intent?>() {
+  private class OpenCreateShortcut : ActivityResultContract<ResolveInfo, ShortcutDraft?>() {
     @CallSuper
     override fun createIntent(context: Context, input: ResolveInfo): Intent {
       return Intent(Intent.ACTION_CREATE_SHORTCUT).apply {
@@ -246,11 +314,23 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
     override fun getSynchronousResult(
       context: Context,
       input: ResolveInfo
-    ): SynchronousResult<Intent?>? = null
+    ): SynchronousResult<ShortcutDraft?>? = null
 
-    override fun parseResult(resultCode: Int, intent: Intent?): Intent? {
-      return intent.takeIf { resultCode == Activity.RESULT_OK }
-        ?.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT) as? Intent
+    override fun parseResult(resultCode: Int, intent: Intent?): ShortcutDraft? {
+      if (resultCode != Activity.RESULT_OK || intent == null) {
+        return null
+      }
+
+      val shortcutIntent =
+        intent.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT) as? Intent ?: return null
+      val name = intent.getStringExtra(Intent.EXTRA_SHORTCUT_NAME).orEmpty()
+
+      return ShortcutDraft(name, shortcutIntent)
     }
   }
+
+  private data class ShortcutDraft(
+    val name: String,
+    val intent: Intent
+  )
 }
