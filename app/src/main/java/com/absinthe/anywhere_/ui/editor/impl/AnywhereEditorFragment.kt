@@ -62,12 +62,13 @@ class AnywhereEditorFragment : BaseEditorFragment() {
       adapter.apply {
         animationEnable = true
         val headerBinding = LayoutHeaderExtrasBinding.inflate(layoutInflater)
+        val addExtra = View.OnClickListener {
+          addData(0, ExtraBean.ExtraItem(TYPE_STRING, "", ""))
+        }
+        headerBinding.root.setOnClickListener(addExtra)
+        headerBinding.ibAdd.setOnClickListener(addExtra)
         addHeaderView(headerBinding.root)
 
-        headerBinding.ibAdd.setOnClickListener {
-          val item = ExtraBean.ExtraItem(TYPE_STRING, "", "")
-          addData(0, item)
-        }
         setOnItemChildClickListener { _, view, position ->
           if (view.id == R.id.ib_delete) {
             if (data.size > 0 && position < data.size) {

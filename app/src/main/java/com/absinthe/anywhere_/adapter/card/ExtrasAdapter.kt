@@ -19,7 +19,7 @@ class ExtrasAdapter : BaseQuickAdapter<ExtraBean.ExtraItem, BaseViewHolder>(R.la
 
   override fun convert(holder: BaseViewHolder, item: ExtraBean.ExtraItem) {
     holder.getView<Spinner>(R.id.spinner).apply {
-      setSelection(TYPE_LIST.indexOf(item.type))
+      setSelection(TYPE_LIST.indexOf(item.type).coerceAtLeast(0))
       onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
         override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -36,33 +36,28 @@ class ExtrasAdapter : BaseQuickAdapter<ExtraBean.ExtraItem, BaseViewHolder>(R.la
       }
     }
 
-    holder.getView<EditText>(R.id.et_key).apply {
-      if (item.key.isNotEmpty()) {
-        setText(item.key)
+    holder.getView<EditText>(R.id.et_key).bindText(item.key) { item.key = it }
+    holder.getView<EditText>(R.id.et_value).bindText(item.value) { item.value = it }
+  }
+
+  /**
+   * Replaces the text and its watcher, so a recycled row does not keep listening for the
+   * previous item nor show its text.
+   */
+  private fun EditText.bindText(value: String, onChanged: (String) -> Unit) {
+    (tag as? TextWatcher)?.let(::removeTextChangedListener)
+    setText(value)
+    setSelection(text.length)
+    val watcher = object : TextWatcher {
+      override fun afterTextChanged(text: Editable) {
+        onChanged(text.toString())
       }
-      addTextChangedListener(object : TextWatcher {
-        override fun afterTextChanged(text: Editable) {
-          item.key = text.toString()
-        }
 
-        override fun beforeTextChanged(p0: CharSequence, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence, p1: Int, p2: Int, p3: Int) {}
-      })
+      override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+      override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
     }
-
-    holder.getView<EditText>(R.id.et_value).apply {
-      if (item.value.isNotEmpty()) {
-        setText(item.value)
-      }
-      addTextChangedListener(object : TextWatcher {
-        override fun afterTextChanged(text: Editable) {
-          item.value = text.toString()
-        }
-
-        override fun beforeTextChanged(p0: CharSequence, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence, p1: Int, p2: Int, p3: Int) {}
-      })
-    }
+    addTextChangedListener(watcher)
+    tag = watcher
   }
 
   companion object {
