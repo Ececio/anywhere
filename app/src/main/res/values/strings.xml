@@ -520,4 +520,24 @@
   <string name="cloud_rules_email_header">Contributor:\nDescription:\n\n** DO NOT MODIFY CONTENT BELOW ** Card will be uploaded after reviewing</string>
   <string name="cloud_rules_need_root">Need root</string>
 
+  <!--  Activity preview  -->
+  <string name="settings_activity_preview">Activity preview</string>
+  <string name="settings_activity_preview_summary">Launch every activity, capture screenshots and screen text</string>
+  <string name="preview_no_package">No app selected</string>
+  <string name="preview_select_app">Select app</string>
+  <string name="preview_start">Start</string>
+  <string name="preview_stop">Stop</string>
+  <string name="preview_export">Export HTML</string>
+  <string name="preview_search_hint">Search class, label or screen text</string>
+  <string name="preview_hide_duplicates">Hide duplicates</string>
+  <string name="preview_only_failed">Only failed</string>
+  <string name="preview_select_app_first">Select an app first</string>
+  <string name="preview_stop_first">Stop the running preview first</string>
+  <string name="preview_need_root">Root permission is required</string>
+  <string name="preview_no_activity">No activity found</string>
+  <string name="preview_probing">Probing %1$d / %2$d</string>
+  <string name="preview_summary">%1$d activities · %2$d ok · %3$d failed · %4$d skipped · %5$d duplicates</string>
+  <string name="preview_stopped">Preview stopped</string>
+  <string name="preview_no_screen_text">(no text captured)</string>
+
 </resources>

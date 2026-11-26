@@ -467,4 +467,25 @@
   <string name="settings_show_defreezing_toast_summary">把大象放進雪櫃需要幾步？</string>
     <string name="settings_auto_detect_rules">自動檢測規則</string>
   <string name="settings_auto_detect_rules_summary">自動檢測來自剪貼板的規則</string>
+
+  <!--  Activity preview  -->
+  <string name="settings_activity_preview">Activity 預覽</string>
+  <string name="settings_activity_preview_summary">逐個啟動 Activity，截圖並抓取頁面文字</string>
+  <string name="preview_no_package">未選擇應用</string>
+  <string name="preview_select_app">選擇應用</string>
+  <string name="preview_start">開始</string>
+  <string name="preview_stop">停止</string>
+  <string name="preview_export">匯出 HTML</string>
+  <string name="preview_search_hint">搜尋類名、標籤或頁面文字</string>
+  <string name="preview_hide_duplicates">隱藏重複</string>
+  <string name="preview_only_failed">只看失敗</string>
+  <string name="preview_select_app_first">請先選擇應用</string>
+  <string name="preview_stop_first">請先停止正在運行的預覽</string>
+  <string name="preview_need_root">需要 Root 權限</string>
+  <string name="preview_no_activity">沒有找到 Activity</string>
+  <string name="preview_probing">正在探測 %1$d / %2$d</string>
+  <string name="preview_summary">共 %1$d 個 Activity · 成功 %2$d · 失敗 %3$d · 跳過 %4$d · 重複 %5$d</string>
+  <string name="preview_stopped">預覽已停止</string>
+  <string name="preview_no_screen_text">（未抓取到文字）</string>
+
 </resources>

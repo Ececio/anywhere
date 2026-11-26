@@ -285,6 +285,12 @@
       android:exported="false"
       android:label="@string/logcat" />
 
+    <!--    Activity preview page    -->
+    <activity
+      android:name=".ui.preview.ActivityPreviewActivity"
+      android:exported="false"
+      android:label="@string/settings_activity_preview" />
+
     <!--    Cloud rules page    -->
     <activity
       android:name=".ui.cloud.CloudRulesActivity"

@@ -6,6 +6,10 @@
   <color name="customize_popup_background">#FFF1F8E9</color>
 
   <color name="transparent">#00000000</color>
+  <color name="preview_note">#FFD0A85A</color>
+  <color name="preview_ok">#FF4AC382</color>
+  <color name="preview_failed">#FFE05C5C</color>
+  <color name="preview_skipped">#FF9A9A9A</color>
   <color name="white">#FFFFFFFF</color>
   <color name="black">#FF000000</color>
   <color name="gray">#FFECECEC</color>
