@@ -363,11 +363,17 @@ class BaseCardAdapter(
       }
       if (icon != null) {
         view.imageTintList = null
+        // The icon is cached and shared between binds. A recycled header may have tinted it
+        // before, so make sure it is drawn with its original colors.
+        icon.setTintList(null)
         view.setImageDrawable(icon)
         return
       }
     }
 
+    // Clear the current drawable first: setting a tint while a recycled app icon is still
+    // displayed would tint that shared drawable, and the group icon would lose its colors.
+    view.setImageDrawable(null)
     view.imageTintList = ColorStateList.valueOf(
       context.getColorByAttr(com.google.android.material.R.attr.colorPrimary)
     )
