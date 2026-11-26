@@ -71,6 +71,39 @@ class ShortcutIntentDataReaderTest {
   }
 
   @Test
+  fun parsesSingleQuotedIntentBaseWithJsonPayload() {
+    val jd = """
+      @@@/data/system_ce/0/shortcut_service/packages/com.jingdong.app.mall.xml
+      <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+      <package name="com.jingdong.app.mall">
+        <shortcut id="saoasao" title="扫啊扫">
+          <intent intent-base='openApp.jdMobile://virtual?params={"category":"jump","des":"native_scan","source":"3dtouch"}' />
+        </shortcut>
+        <shortcut id="paycode" title="付款码">
+          <intent intent-base="#Intent;launchFlags=0x10000000;component=com.jingdong.app.mall/.shortcuts.ShortCutDslJumpActivity;end">
+            <extras>
+              <string name="openApp">openapp.jdmobile://virtual?params={"category":"jump","des":"jdpaymentcode"}</string>
+            </extras>
+          </intent>
+        </shortcut>
+        <shortcut id="with_gt" title="GT">
+          <intent intent-base='openApp.jdMobile://virtual?params={"a":">"}' />
+        </shortcut>
+      </package>
+    """.trimIndent()
+
+    val jdData = ShortcutIntentDataReader.parse(jd).getValue("com.jingdong.app.mall")
+
+    assertEquals(
+      """openApp.jdMobile://virtual?params={"category":"jump","des":"native_scan","source":"3dtouch"}""",
+      jdData["saoasao"]
+    )
+    // Only the URL in extras: the intent itself has no data, so the dump value must be kept.
+    assertNull(jdData["paycode"])
+    assertEquals("""openApp.jdMobile://virtual?params={"a":">"}""", jdData["with_gt"])
+  }
+
+  @Test
   fun extractsDataFromIntentBase() {
     assertEquals(
       "snssdk1128://search?q=a",

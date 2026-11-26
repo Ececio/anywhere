@@ -22,10 +22,10 @@ object ShortcutIntentDataReader {
   private const val MARKER = "@@@"
   private const val PACKAGES_DIR = "shortcut_service/packages"
 
-  private val SHORTCUT_ID_REGEX = Regex("""\bid="([^"]*)"""")
-  private val INTENT_BASE_REGEX = Regex("""\bintent-base="([^"]*)"""")
-  private val INTENT_LEGACY_REGEX = Regex("""\bintent="([^"]*)"""")
-  private val INTENT_TAG_REGEX = Regex("""<intent\b[^>]*>""")
+  // abx2xml switches an attribute to single quotes when its value contains double quotes, which is
+  // common for JSON payloads such as `params={"category":"jump"}`. Both quote styles must be read.
+  private val SHORTCUT_TAG_REGEX = Regex("""<shortcut\b(?:[^>"']|"[^"]*"|'[^']*')*>""")
+  private val INTENT_TAG_REGEX = Regex("""<intent\b(?:[^>"']|"[^"]*"|'[^']*')*>""")
 
   /**
    * Whether [data] printed by the dump has to be replaced with the value stored by the shortcut
@@ -126,23 +126,17 @@ object ShortcutIntentDataReader {
       return result
     }
 
-    var index = 0
+    var searchFrom = 0
     while (true) {
-      val start = xml.indexOf("<shortcut", index)
-      if (start < 0) {
-        break
-      }
-      val openEnd = xml.indexOf('>', start)
-      if (openEnd < 0) {
-        break
-      }
-      val openTag = xml.substring(start, openEnd + 1)
-      val id = SHORTCUT_ID_REGEX.find(openTag)?.groupValues?.getOrNull(1)
-      val close = xml.indexOf("</shortcut>", openEnd)
+      val openMatch = SHORTCUT_TAG_REGEX.find(xml, searchFrom) ?: break
+      val openTag = openMatch.value
+      val openEnd = openMatch.range.last
+      val id = attributeValue(openTag, "id")
+      val close = xml.indexOf("</shortcut>", openEnd + 1)
       val blockEnd = if (close < 0) xml.length else close
       val intentTag = INTENT_TAG_REGEX.find(xml.substring(openEnd + 1, blockEnd))?.value
       val rawBase = intentTag?.let {
-        (INTENT_BASE_REGEX.find(it) ?: INTENT_LEGACY_REGEX.find(it))?.groupValues?.getOrNull(1)
+        attributeValue(it, "intent-base") ?: attributeValue(it, "intent")
       }
       val data = rawBase?.let(::dataOfIntentBase)?.let(::unescapeXml)
 
@@ -150,10 +144,17 @@ object ShortcutIntentDataReader {
         result[unescapeXml(id)] = data
       }
 
-      index = if (close < 0) xml.length else close + "</shortcut>".length
+      searchFrom = if (close < 0) xml.length else close + "</shortcut>".length
     }
 
     return result
+  }
+
+  /** Reads [name] from a start tag, accepting both `"` and `'` as the attribute delimiter. */
+  private fun attributeValue(tag: String, name: String): String? {
+    val match = Regex("""\b${Regex.escape(name)}=(?:"([^"]*)"|'([^']*)')""").find(tag)
+      ?: return null
+    return match.groups[1]?.value ?: match.groups[2]?.value
   }
 
   private fun unescapeXml(value: String): String {
