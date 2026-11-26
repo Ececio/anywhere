@@ -10,8 +10,8 @@ plugins {
   id("dev.rikka.tools.materialthemebuilder")
 }
 
-val verName = "2.7.16"
-val verCode = 2071600
+val verName = "2.7.17"
+val verCode = 2071700
 
 android {
   compileSdk = 34

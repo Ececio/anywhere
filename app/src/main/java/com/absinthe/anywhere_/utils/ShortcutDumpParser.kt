@@ -26,10 +26,12 @@ object ShortcutDumpParser {
     val component: String?,
     val categories: List<String>,
     val extras: Map<String, String>,
-    val iconResId: Int
+    val iconResId: Int,
+    val userId: Int
   )
 
   private const val HEADER_PREFIX = "ShortcutInfo {"
+  private const val USER_PREFIX = "User: "
   private const val ENABLED_REASON = "[Not disabled]"
 
   private val FLAG_NAMES_REGEX = Regex("""\[([^\]]*)]""")
@@ -44,13 +46,21 @@ object ShortcutDumpParser {
   fun parse(dump: String): List<Shortcut> {
     val shortcuts = mutableListOf<Shortcut>()
     var builder: Builder? = null
+    var userId = 0
 
     for (rawLine in dump.lineSequence()) {
       val line = rawLine.trim()
 
+      if (line.startsWith(USER_PREFIX)) {
+        builder?.let { build(it) }?.let(shortcuts::add)
+        builder = null
+        userId = line.removePrefix(USER_PREFIX).substringBefore(' ').trim().toIntOrNull() ?: userId
+        continue
+      }
+
       if (line.startsWith(HEADER_PREFIX)) {
         builder?.let { build(it) }?.let(shortcuts::add)
-        builder = parseHeader(line)
+        builder = parseHeader(line, userId)
         continue
       }
 
@@ -71,7 +81,7 @@ object ShortcutDumpParser {
     return shortcuts
   }
 
-  private fun parseHeader(line: String): Builder? {
+  private fun parseHeader(line: String, userId: Int): Builder? {
     val body = line.removePrefix(HEADER_PREFIX)
     val id = body.substringAfter("id=", "").substringBefore(", flags=").trim()
 
@@ -86,7 +96,7 @@ object ShortcutDumpParser {
       else -> return null
     }
 
-    return Builder(id, kind)
+    return Builder(id, kind, userId)
   }
 
   private fun build(builder: Builder): Shortcut? {
@@ -117,7 +127,8 @@ object ShortcutDumpParser {
       component = intent.component,
       categories = intent.categories,
       extras = intent.extras,
-      iconResId = builder.iconResId
+      iconResId = builder.iconResId,
+      userId = builder.userId
     )
   }
 
@@ -218,7 +229,8 @@ object ShortcutDumpParser {
 
   private class Builder(
     val id: String,
-    val kind: Kind
+    val kind: Kind,
+    val userId: Int
   ) {
     var packageName: String = ""
     var shortLabel: String = ""

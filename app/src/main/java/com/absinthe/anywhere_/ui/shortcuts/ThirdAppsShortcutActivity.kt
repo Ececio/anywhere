@@ -11,6 +11,7 @@ import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Process
 import android.view.Menu
 import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContract
@@ -43,6 +44,7 @@ import com.absinthe.anywhere_.ui.editor.EditorActivity
 import com.absinthe.anywhere_.utils.CardIconStore
 import com.absinthe.anywhere_.utils.CommandUtils
 import com.absinthe.anywhere_.utils.ShortcutDumpParser
+import com.absinthe.anywhere_.utils.ShortcutIntentDataReader
 import com.absinthe.anywhere_.utils.ThirdAppShortcutConverter
 import com.absinthe.anywhere_.utils.ToastUtil
 import com.google.android.material.button.MaterialButton
@@ -333,15 +335,55 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
       return null
     }
 
+    val userId = Process.myUid() / 100000
     return ShortcutDumpParser.parse(dump)
-      .asSequence()
-      .filter { it.packageName != BuildConfig.APPLICATION_ID }
-      .mapNotNull { toThirdAppShortcut(it) }
-      .sortedWith(compareBy({ it.appLabel.lowercase() }, { it.rank }, { it.label }))
-      .toList()
+      .let { shortcuts ->
+        val fullData = loadFullIntentData(shortcuts, userId)
+        shortcuts.asSequence()
+          .filter { it.packageName != BuildConfig.APPLICATION_ID }
+          .mapNotNull { shortcut ->
+            // The dump decodes percent escapes, so only trust the XML of the current user.
+            val data = if (shortcut.userId == userId) {
+              fullData[shortcut.packageName]?.get(shortcut.id)
+            } else {
+              null
+            }
+            toThirdAppShortcut(shortcut, data)
+          }
+          .sortedWith(compareBy({ it.appLabel.lowercase() }, { it.rank }, { it.label }))
+          .toList()
+      }
   }
 
-  private fun toThirdAppShortcut(shortcut: ShortcutDumpParser.Shortcut): ThirdAppShortcut? {
+  /**
+   * The dump prints shortcut intent data incompletely: since Android 13 only `scheme://host/...`
+   * is kept, and before that percent escapes are decoded, which corrupts URIs that carry an
+   * encoded URL as a query parameter. Read the original values from the shortcut service's XML
+   * files, which store each intent as `Intent.toUri(0)`.
+   */
+  private fun loadFullIntentData(
+    shortcuts: List<ShortcutDumpParser.Shortcut>,
+    userId: Int
+  ): Map<String, Map<String, String>> {
+    val packages = shortcuts
+      .asSequence()
+      .filter { it.userId == userId }
+      .filter { it.packageName != BuildConfig.APPLICATION_ID }
+      .filter { ShortcutIntentDataReader.needsFullData(it.data) }
+      .map { it.packageName }
+      .toSortedSet()
+
+    return if (packages.isEmpty()) {
+      emptyMap()
+    } else {
+      ShortcutIntentDataReader.load(packages, userId)
+    }
+  }
+
+  private fun toThirdAppShortcut(
+    shortcut: ShortcutDumpParser.Shortcut,
+    fullData: String?
+  ): ThirdAppShortcut? {
     val appInfo = try {
       packageManager.getApplicationInfo(shortcut.packageName, 0)
     } catch (t: PackageManager.NameNotFoundException) {
@@ -373,7 +415,7 @@ class ThirdAppsShortcutActivity : AppBarActivity<ActivityThirdAppsShortcutBindin
       kind = shortcut.kind,
       rank = shortcut.rank,
       action = shortcut.action,
-      data = shortcut.data,
+      data = fullData ?: shortcut.data,
       mimeType = shortcut.mimeType,
       flags = shortcut.flags,
       targetPackage = shortcut.targetPackage,

@@ -133,6 +133,35 @@ class ShortcutDumpParserTest {
   }
 
   @Test
+  fun tracksUserOfEachShortcut() {
+    val multiUser = """
+      User: 0  Known locales: [en-US]
+        Package: com.example.zero  UID: 10000
+          Shortcuts:
+            ShortcutInfo {id=zero, flags=0x85 [DynIc-rStr]
+              packageName=com.example.zero
+              shortLabel=Zero, resId=0[null]
+              disabledReason=[Not disabled]
+              intents=[Intent { act=android.intent.action.VIEW dat=foo://zero flg=0x10000000 }/null]
+              iconRes=0[null], bitmapPath=null, iconUri=null}
+      User: 10  Known locales: [en-US]
+        Package: com.example.ten  UID: 1010000
+          Shortcuts:
+            ShortcutInfo {id=ten, flags=0x85 [DynIc-rStr]
+              packageName=com.example.ten
+              shortLabel=Ten, resId=0[null]
+              disabledReason=[Not disabled]
+              intents=[Intent { act=android.intent.action.VIEW dat=foo://ten flg=0x10000000 }/null]
+              iconRes=0[null], bitmapPath=null, iconUri=null}
+    """.trimIndent()
+
+    val shortcuts = ShortcutDumpParser.parse(multiUser)
+
+    assertEquals(0, shortcuts.first { it.id == "zero" }.userId)
+    assertEquals(10, shortcuts.first { it.id == "ten" }.userId)
+  }
+
+  @Test
   fun skipsDisabledAndPinnedOnlyShortcuts() {
     val ids = ShortcutDumpParser.parse(dump).map { it.id }
 
