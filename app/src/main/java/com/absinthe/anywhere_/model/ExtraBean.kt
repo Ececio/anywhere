@@ -27,14 +27,17 @@ data class ExtraBean(
   override fun toString(): String {
     val sb = StringBuilder()
     if (action.isNotBlank()) {
-      sb.append("-a ").append(action)
+      sb.append("-a ").append(quoteForShell(action))
     }
     if (data.isNotBlank()) {
-      sb.append(" -d ").append(data)
+      sb.append(" -d ").append(quoteForShell(data))
     }
 
     for (extra in extras) {
-      sb.append(" ").append(extra.toString())
+      if (sb.isNotEmpty()) {
+        sb.append(' ')
+      }
+      sb.append(extra.toString())
     }
     return sb.toString()
   }
@@ -45,7 +48,20 @@ data class ExtraBean(
     @SerializedName("value") var value: String
   ) {
     override fun toString(): String {
-      return "$type \"$key\" \"$value\""
+      return "$type ${quoteForShell(key)} ${quoteForShell(value)}"
+    }
+  }
+
+  companion object {
+    /**
+     * Quotes a command argument for the shell used by [com.absinthe.anywhere_.utils.CommandUtils].
+     *
+     * Double quotes are not enough: extra values can contain quotes, `$`, backticks and `//`
+     * (JSON payloads for example), and the shell would strip or expand them before `am` sees them.
+     * Single quotes keep the value byte for byte; an embedded single quote is written as `'\''`.
+     */
+    fun quoteForShell(value: String): String {
+      return "'" + value.replace("'", "'\\''") + "'"
     }
   }
 }

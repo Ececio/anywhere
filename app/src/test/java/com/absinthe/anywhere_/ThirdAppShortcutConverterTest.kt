@@ -183,6 +183,6 @@ class ThirdAppShortcutConverterTest {
     assertEquals(TYPE_BOOLEAN, bean.extras.first { it.key == "flag" }.type)
     assertEquals(TYPE_INT, bean.extras.first { it.key == "count" }.type)
     assertEquals(TYPE_STRING, bean.extras.first { it.key == "name" }.type)
-    assertTrue(bean.toString().contains("-a android.intent.action.VIEW"))
+    assertTrue(bean.toString().contains("-a 'android.intent.action.VIEW'"))
   }
 }

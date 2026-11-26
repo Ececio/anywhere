@@ -65,11 +65,18 @@ object CommandUtils {
         CommandResult.RESULT_NO_REACT_URL
       }
     } else if (newCmd.startsWith("am start -n")) {
-      val pkgClsString = newCmd.replace("am start -n ", "")
-      val pkg = pkgClsString.split("/")[0]
-      val cls = pkgClsString.split("/")[1]
+      val args = newCmd.removePrefix("am start -n").trim()
+      // Only the first token is the package/class pair. The rest can contain slashes, quotes and
+      // spaces (for example --es values holding JSON or URLs), so it must not be split on "/".
+      val pkgClsString = args.substringBefore(' ')
+      val pkg = pkgClsString.substringBefore('/')
+      val cls = pkgClsString.substringAfter('/', "")
 
-      if (AppUtils.isActivityExported(Utils.getApp(), ComponentName(pkg, cls))) {
+      if (args.length > pkgClsString.length) {
+        // The command carries options such as -a/--es. Building an Intent from the component
+        // alone would silently drop them, so run the full command instead.
+        result = execAdbCmd(newCmd)
+      } else if (AppUtils.isActivityExported(Utils.getApp(), ComponentName(pkg, cls))) {
         try {
           val intent = Intent(Intent.ACTION_VIEW).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

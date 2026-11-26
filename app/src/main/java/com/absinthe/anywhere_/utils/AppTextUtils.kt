@@ -136,10 +136,12 @@ object AppTextUtils {
    */
   fun getPkgNameByCommand(cmd: String): String? {
     return if (cmd.startsWith("am start -n ")) {
+      // The package is the part before "/" in the component token only; extra options can contain
+      // slashes as well.
       cmd.removePrefix("am start -n ")
-
-      val splits = cmd.split("/")
-      if (splits.size > 1) splits[0] else ""
+        .substringBefore(' ')
+        .substringBefore('/')
+        .ifBlank { "" }
     } else if (cmd.startsWith("am start -a ")) {
       cmd.removePrefix(Const.CMD_OPEN_URL_SCHEME)
       getPkgNameByUrlScheme(cmd)
