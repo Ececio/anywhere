@@ -324,31 +324,22 @@ object Opener {
 
       val intent = if (item.param1.isNotBlank()) {
         if (item.param2.isNullOrBlank()) {
-          IntentUtils.getLaunchAppIntent(item.param1)?.apply {
-            if (context !is Activity) {
-              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-          } ?: let {
-            Intent().apply {
-              if (context !is Activity) {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-              }
-            }
-          }
+          IntentUtils.getLaunchAppIntent(item.param1) ?: Intent()
         } else {
           Intent(action).apply {
             component = ComponentName(item.param1, className.orEmpty())
-            if (context !is Activity) {
-              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
           }
         }
       } else {
-        Intent(action).apply {
-          if (context !is Activity) {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-          }
-        }
+        Intent(action)
+      }
+
+      // Another app's activity has to be started in its own task. Otherwise it is pushed onto
+      // Anywhere's task, so recents keeps showing Anywhere and back returns to it.
+      if (context !is Activity ||
+        item.param1.isNotBlank() && item.param1 != context.packageName
+      ) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       }
 
       extraBean?.let {
