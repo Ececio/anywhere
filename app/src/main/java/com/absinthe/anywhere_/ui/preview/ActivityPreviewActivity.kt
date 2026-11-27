@@ -14,6 +14,10 @@ import com.absinthe.anywhere_.R
 import com.absinthe.anywhere_.constants.Const
 import com.absinthe.anywhere_.databinding.ActivityActivityPreviewBinding
 import com.absinthe.anywhere_.databinding.DialogActivityPreviewBinding
+import com.absinthe.anywhere_.ui.editor.ACTION_EDITOR
+import com.absinthe.anywhere_.ui.editor.EditorActivity
+import com.absinthe.anywhere_.ui.editor.EXTRA_CLASS_NAME
+import com.absinthe.anywhere_.ui.editor.EXTRA_PACKAGE_NAME as EXTRA_EDITOR_PACKAGE_NAME
 import com.absinthe.anywhere_.ui.list.AppListActivity
 import com.absinthe.anywhere_.ui.list.EXTRA_APP_LIST_ENTRY_MODE
 import com.absinthe.anywhere_.ui.list.EXTRA_PACKAGE_NAME
@@ -58,8 +62,18 @@ class ActivityPreviewActivity : AppBarActivity<ActivityActivityPreviewBinding>()
     binding.rvPreview.layoutManager = LinearLayoutManager(this)
     binding.rvPreview.adapter = adapter
     adapter.setNewInstance(visibleItems)
+    adapter.addChildClickViewIds(R.id.iv_thumb)
     adapter.setOnItemClickListener { _, _, position ->
+      adapter.getItemOrNull(position)?.let { openEditor(it) }
+    }
+    adapter.setOnItemLongClickListener { _, _, position ->
       adapter.getItemOrNull(position)?.let { showDetail(it) }
+      true
+    }
+    adapter.setOnItemChildClickListener { _, view, position ->
+      if (view.id == R.id.iv_thumb) {
+        adapter.getItemOrNull(position)?.let { openImage(it) }
+      }
     }
 
     binding.btnSelect.setOnClickListener { selectApp() }
@@ -310,6 +324,41 @@ class ActivityPreviewActivity : AppBarActivity<ActivityActivityPreviewBinding>()
       item.label.lowercase(Locale.ROOT).contains(query) ||
       item.screenText.lowercase(Locale.ROOT).contains(query) ||
       item.note.lowercase(Locale.ROOT).contains(query)
+  }
+
+  private fun openEditor(item: ActivityPreviewItem) {
+    startActivity(
+      Intent(this, EditorActivity::class.java).apply {
+        action = ACTION_EDITOR
+        putExtra(EXTRA_EDITOR_PACKAGE_NAME, item.packageName)
+        putExtra(EXTRA_CLASS_NAME, item.className)
+      }
+    )
+  }
+
+  private fun openImage(item: ActivityPreviewItem) {
+    val viewable = visibleItems.filter { !it.shotPath.isNullOrEmpty() }
+    val start = viewable.indexOfFirst { it.index == item.index }
+    if (start < 0) return
+
+    startActivity(
+      Intent(this, ActivityPreviewImageActivity::class.java).apply {
+        putStringArrayListExtra(
+          ActivityPreviewImageActivity.EXTRA_SHOT_PATHS,
+          ArrayList(viewable.map { it.shotPath!! })
+        )
+        putStringArrayListExtra(
+          ActivityPreviewImageActivity.EXTRA_CLASS_NAMES,
+          ArrayList(viewable.map { it.className })
+        )
+        putExtra(
+          ActivityPreviewImageActivity.EXTRA_INDEXES,
+          viewable.map { it.index }.toIntArray()
+        )
+        putExtra(ActivityPreviewImageActivity.EXTRA_START, start)
+        putExtra(ActivityPreviewImageActivity.EXTRA_TARGET_PACKAGE, packageName)
+      }
+    )
   }
 
   private fun showDetail(item: ActivityPreviewItem) {

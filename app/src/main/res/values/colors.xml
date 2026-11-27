@@ -10,6 +10,7 @@
   <color name="preview_ok">#FF4AC382</color>
   <color name="preview_failed">#FFE05C5C</color>
   <color name="preview_skipped">#FF9A9A9A</color>
+  <color name="preview_scrim">#B3000000</color>
   <color name="white">#FFFFFFFF</color>
   <color name="black">#FF000000</color>
   <color name="gray">#FFECECEC</color>

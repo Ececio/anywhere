@@ -487,5 +487,11 @@
   <string name="preview_summary">共 %1$d 个 Activity · 成功 %2$d · 失败 %3$d · 跳过 %4$d · 重复 %5$d</string>
   <string name="preview_stopped">预览已停止</string>
   <string name="preview_no_screen_text">（未抓取到文字）</string>
+  <string name="preview_image_title">#%1$d  %2$s</string>
+  <string name="preview_image_counter">%1$d / %2$d</string>
+  <string name="preview_exit_image">退出看图</string>
+  <string name="preview_prev_image">上一张</string>
+  <string name="preview_next_image">下一张</string>
+  <string name="preview_edit_card">编辑卡片</string>
 
 </resources>

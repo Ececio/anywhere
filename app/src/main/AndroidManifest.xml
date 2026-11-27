@@ -291,6 +291,11 @@
       android:exported="false"
       android:label="@string/settings_activity_preview" />
 
+    <activity
+      android:name=".ui.preview.ActivityPreviewImageActivity"
+      android:exported="false"
+      android:label="@string/settings_activity_preview" />
+
     <!--    Cloud rules page    -->
     <activity
       android:name=".ui.cloud.CloudRulesActivity"
